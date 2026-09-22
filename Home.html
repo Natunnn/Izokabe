@@ -930,6 +930,70 @@
 </div>
 
 <!-- ═══════════════════════════ JS ═══════════════════════════ -->
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+const firebaseConfig = {
+  apiKey: "AIzaSyAIhnvqw9TLv-KFMDF_QydEaRtmDQnpmE8",
+  authDomain: "izokabe.firebaseapp.com",
+  projectId: "izokabe",
+  storageBucket: "izokabe.firebasestorage.app",
+  messagingSenderId: "352221770859",
+  appId: "1:352221770859:web:e874a9ae7fefd0e83b2d2e",
+  measurementId: "G-3R9E7MMP2C"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => 'Rp ' + (parseInt(n)||0).toLocaleString('id-ID');
+const badgeCls = k => k === 'material' ? 'badge-material' : k === 'alat' ? 'badge-alat' : 'badge-lainnya';
+const badgeLbl = k => (k||'lainnya').charAt(0).toUpperCase() + (k||'lainnya').slice(1);
+
+onSnapshot(collection(db, 'products'), snapshot => {
+  const items = [];
+  snapshot.forEach(d => items.push({ id: d.id, ...d.data() }));
+  items.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+  const grid = document.getElementById('katalog-grid');
+  const countEl = document.getElementById('item-count');
+  if (!grid) return;
+  if (!items.length) return;
+
+  grid.innerHTML = items.map(it => `
+    <div class="katalog-card reveal visible group bg-ink-800 border border-white/8 flex flex-col"
+         data-kategori="${esc(it.kategori||'lainnya')}"
+         data-nama="${esc(it.nama)}"
+         data-harga="${parseInt(it.harga)||0}">
+      <div class="relative overflow-hidden aspect-square bg-ink-700">
+        ${it.foto
+          ? `<img src="${esc(it.foto)}" alt="${esc(it.nama)}" class="card-img w-full h-full object-cover" onerror="this.style.display='none'"/>`
+          : `<div class="card-img w-full h-full flex items-center justify-center text-slate/20">
+               <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+             </div>`}
+        <div class="card-overlay absolute inset-0 bg-gold/8 flex items-center justify-center">
+          <button onclick="openDetail(this)" class="bg-ink-900/80 border border-gold text-gold font-mono text-xs tracking-widest uppercase px-5 py-2 hover:bg-gold hover:text-ink transition-all">Lihat Detail</button>
+        </div>
+        <div class="absolute top-3 left-3">
+          <span class="${badgeCls(it.kategori)} font-mono text-xs px-2 py-1 tracking-widest uppercase">${badgeLbl(it.kategori)}</span>
+        </div>
+      </div>
+      <div class="p-5 flex flex-col flex-1">
+        <h3 class="font-display text-base font-bold text-cream mb-1">${esc(it.nama)}</h3>
+        <p class="font-body text-xs text-slate-light leading-relaxed flex-1 mb-4">${esc(it.deskripsi||'')}</p>
+        <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+          <span class="font-mono text-gold font-bold">${fmt(it.harga)}</span>
+          <a href="Home.html#contact" class="font-mono text-xs text-slate border border-white/10 px-3 py-1.5 hover:border-gold hover:text-gold transition-all">Pesan</a>
+        </div>
+      </div>
+    </div>`).join('');
+
+  if (countEl) countEl.textContent = items.length + ' item';
+}, err => console.warn('[katalog] Firestore error:', err.message));
+</script>
+
 <script>
   // ── Custom cursor
   const cursor = document.getElementById('cursor');
