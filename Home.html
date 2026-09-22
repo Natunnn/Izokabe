@@ -1351,35 +1351,12 @@ const firebaseConfig = {
   measurementId: "G-3R9E7MMP2C"
 };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // Gunakan onSnapshot untuk mendapatkan update data secara real-time
-  onSnapshot(collection(db, 'products'), (snapshot) => {
-    const items = [];
-    snapshot.forEach(doc => {
-      items.push({ id: doc.id, ...doc.data() });
-    });
-
-    // Di sini, panggil fungsi untuk merender items ke halaman.
-    // Anda bisa memindahkan logika render dari skrip lokal ke sini.
-    // Contoh: renderKatalog(items); atau renderPortfolioBarang(items);
-    console.log('Data terbaru dari Firestore:', items);
-    // renderItems(items); // <-- Panggil fungsi render Anda di sini
-  });
-</script>
-
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
-import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import firebaseConfig from './firebase-config.js';
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = n => 'Rp ' + (parseInt(n)||0).toLocaleString('id-ID');
-const badgeCls = k => k === 'material' ? 'badge-material' : k === 'alat' ? 'badge-alat' : 'badge-lainnya';
+const badgeCls = k => k === 'material' ? 'bg-gold text-ink' : 'bg-ink-600 text-slate-light border border-white/10';
 const badgeLbl = k => (k||'lainnya').charAt(0).toUpperCase() + (k||'lainnya').slice(1);
 
 onSnapshot(collection(db, 'products'), snapshot => {
@@ -1398,15 +1375,16 @@ onSnapshot(collection(db, 'products'), snapshot => {
   track.innerHTML = items.map(it => `
     <div class="barang-card group bg-ink-800 border border-white/8 flex flex-col"
          data-barangcat="${esc(it.kategori||'lainnya')}">
-      <div class="relative overflow-hidden aspect-square bg-ink-700">
+      <div class="relative overflow-hidden bg-ink-700" style="height:220px;">
         ${it.foto
-          ? `<img src="${esc(it.foto)}" alt="${esc(it.nama)}" class="card-img w-full h-full object-cover" onerror="this.style.display='none'"/>`
+          ? `<img src="${esc(it.foto)}" alt="${esc(it.nama)}" class="card-img" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>`
           : `<div class="card-img w-full h-full flex items-center justify-center text-slate/20">
                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
              </div>`}
         <div class="absolute top-3 left-3">
           <span class="${badgeCls(it.kategori)} font-mono text-[10px] px-2 py-1 tracking-widest uppercase">${badgeLbl(it.kategori)}</span>
         </div>
+        <div class="absolute inset-0 bg-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       </div>
       <div class="p-5 flex flex-col flex-1">
         <h3 class="font-display text-base font-bold text-cream mb-1">${esc(it.nama)}</h3>
@@ -1428,7 +1406,6 @@ onSnapshot(collection(db, 'products'), snapshot => {
       const cat = this.dataset.cat;
       track.querySelectorAll('.barang-card').forEach(card => {
         const show = cat === 'all' || card.dataset.barangcat === cat;
-        card.style.transition = 'opacity .3s, transform .3s';
         card.style.opacity = show ? '1' : '0.15';
         card.style.pointerEvents = show ? 'auto' : 'none';
       });
@@ -1468,9 +1445,8 @@ onSnapshot(collection(db, 'products'), snapshot => {
     currentIndex = Math.max(0, Math.min(index, maxIndex));
     const gap = 20, vw = viewport.offsetWidth;
     const cardW = Math.floor((vw - gap * (vis - 1)) / vis);
-    const offset = currentIndex * (cardW + gap) * vis;
     track.style.transition = 'transform .5s cubic-bezier(.16,1,.3,1)';
-    track.style.transform = `translateX(-${offset}px)`;
+    track.style.transform = `translateX(-${currentIndex * (cardW + gap) * vis}px)`;
     updateDots();
     if (prevBtn) prevBtn.style.opacity = currentIndex === 0 ? '0.3' : '1';
     if (nextBtn) nextBtn.style.opacity = currentIndex >= maxIndex ? '0.3' : '1';
@@ -1481,6 +1457,7 @@ onSnapshot(collection(db, 'products'), snapshot => {
   if (nextBtn) nextBtn.addEventListener('click', () => goTo(currentIndex + 1));
   window.addEventListener('resize', reinitCarousel);
   setTimeout(reinitCarousel, 80);
+
 }, err => console.warn('[Home] Firestore error:', err.message));
 </script>
 
