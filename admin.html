@@ -180,8 +180,13 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const productsCol = collection(db, 'products');
 
-/* ── Expose ke global ── */
 window.FB = { auth, db, productsCol, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, signOut };
+
+// Langsung panggil onAuthStateChanged di sini, bukan di script terpisah
+onAuthStateChanged(auth, user => {
+  window.dispatchEvent(new CustomEvent('fb-auth-ready', { detail: { user } }));
+});
+</script>uth, db, productsCol, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, signOut };
 </script>
 
 <!-- ═══ APP LOGIC ═══ -->
@@ -228,18 +233,16 @@ function showLoading() { loginScreen.classList.add('hidden'); adminScreen.classL
 
 /* ── Auth state ── */
 window.addEventListener('load', () => {
-  showLoading();
-  import('https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js').then(({ onAuthStateChanged }) => {
-    const waitFB = setInterval(() => {
-      if (window.FB && window.FB.auth) {
-        clearInterval(waitFB);
-        onAuthStateChanged(window.FB.auth, user => {
-          if (user) { userEmailEl.textContent = user.email; startAdmin(); }
-          else { showLogin(); }
-        });
-      }
-    }, 50);
-  });
+// Ganti window.addEventListener('load', ...) dengan ini:
+showLoading();
+window.addEventListener('fb-auth-ready', (e) => {
+  const user = e.detail.user;
+  if (user) {
+    userEmailEl.textContent = user.email;
+    startAdmin();
+  } else {
+    showLogin();
+  }
 });
 
 /* ── Login ── */
