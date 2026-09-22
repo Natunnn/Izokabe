@@ -1337,7 +1337,28 @@ document.addEventListener('keydown', function(e){
 })();
 </script>
 
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
+  import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
+  import firebaseConfig from './firebase-config.js';
 
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Gunakan onSnapshot untuk mendapatkan update data secara real-time
+  onSnapshot(collection(db, 'products'), (snapshot) => {
+    const items = [];
+    snapshot.forEach(doc => {
+      items.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Di sini, panggil fungsi untuk merender items ke halaman.
+    // Anda bisa memindahkan logika render dari skrip lokal ke sini.
+    // Contoh: renderKatalog(items); atau renderPortfolioBarang(items);
+    console.log('Data terbaru dari Firestore:', items);
+    // renderItems(items); // <-- Panggil fungsi render Anda di sini
+  });
+</script>
 
 </body>
 </html>

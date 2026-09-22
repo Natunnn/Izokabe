@@ -34,6 +34,64 @@ tailwind.config = { theme: { extend: {
   ::-webkit-scrollbar-thumb{background:#c9a84c;border-radius:3px}
   .dropzone.dragover{border-color:#c9a84c;background:rgba(201,168,76,.05)}
 </style>
+
+<script type="module">
+  // Import fungsi Firebase dari CDN
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
+  import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
+
+  // Import konfigurasi kita
+  import firebaseConfig from './firebase-config.js';
+
+  // Inisialisasi Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const productsCol = collection(db, 'products');
+
+  // --- Fungsi untuk Menambah Barang ---
+  async function addProduct(productData) {
+    try {
+      const docRef = await addDoc(productsCol, {
+        ...productData,
+        createdAt: serverTimestamp()
+      });
+      console.log("Barang ditambahkan dengan ID: ", docRef.id);
+      return true;
+    } catch (e) {
+      console.error("Error menambahkan barang: ", e);
+      return false;
+    }
+  }
+
+  // --- Fungsi untuk Mengupdate Barang ---
+  async function updateProduct(id, newData) {
+    try {
+      const productRef = doc(db, 'products', id);
+      await updateDoc(productRef, newData);
+      console.log("Barang berhasil diupdate");
+      return true;
+    } catch (e) {
+      console.error("Error mengupdate barang: ", e);
+      return false;
+    }
+  }
+
+  // --- Fungsi untuk Menghapus Barang ---
+  async function deleteProduct(id) {
+    try {
+      await deleteDoc(doc(db, 'products', id));
+      console.log("Barang berhasil dihapus");
+      return true;
+    } catch (e) {
+      console.error("Error menghapus barang: ", e);
+      return false;
+    }
+  }
+
+  // Ekspos fungsi-fungsi ini agar bisa dipanggil dari skrip non-module di bawahnya
+  window.Firebase = { addProduct, updateProduct, deleteProduct };
+</script>
+
 </head>
 <body>
 
@@ -241,34 +299,30 @@ function showPreview(src) {
   previewEl.classList.remove('hidden');
 }
 
-form.addEventListener('submit', e => {
+// GANTI 'items.push(...)' dan 'save(items)' dengan logika Firebase
+form.addEventListener('submit', async e => {
   e.preventDefault();
-  const fd = new FormData(form);
-  const id = fd.get('id');
-  const nama = (fd.get('nama')||'').trim();
-  const kategori = fd.get('kategori');
-  const harga = parseInt(fd.get('harga')) || 0;
-  const deskripsi = (fd.get('deskripsi')||'').trim();
-  const fotoUrl = (fd.get('foto_url')||'').trim();
-  if (!nama) return showToast('Nama barang wajib diisi', true);
+  // ... (ambil nilai form seperti sebelumnya) ...
 
-  const items = load();
-  let finalFoto = pendingFoto;
-  if (!finalFoto && fotoUrl) finalFoto = fotoUrl;
+  const productData = { nama, kategori, harga, deskripsi, foto: finalFoto };
 
+  let success;
   if (id) {
-    const idx = items.findIndex(x => x.id === id);
-    if (idx >= 0) items[idx] = { ...items[idx], nama, kategori, harga, deskripsi, foto: finalFoto !== null ? finalFoto : items[idx].foto };
-    showToast('Barang berhasil diupdate');
+    // Mode Edit
+    success = await window.Firebase.updateProduct(id, productData);
   } else {
-    items.push({ id: uid(), nama, kategori, harga, deskripsi, foto: finalFoto || null });
-    showToast('Barang berhasil ditambahkan');
+    // Mode Tambah
+    success = await window.Firebase.addProduct(productData);
   }
-  save(items);
-  resetForm();
-  render();
-});
 
+  if (success) {
+    showToast('Barang berhasil disimpan');
+    resetForm();
+    render(); // Fungsi render harus diubah untuk mengambil data dari Firebase
+  } else {
+    showToast('Gagal menyimpan barang', true);
+  }
+});
 function editItem(id) {
   const it = load().find(x => x.id === id);
   if (!it) return;
