@@ -850,6 +850,7 @@
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
 import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
 const firebaseConfig = {
   apiKey: "AIzaSyAIhnvqw9TLv-KFMDF_QydEaRtmDQnpmE8",
   authDomain: "izokabe.firebaseapp.com",
@@ -865,7 +866,7 @@ const db = getFirestore(app);
 
 const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = n => 'Rp ' + (parseInt(n)||0).toLocaleString('id-ID');
-const badgeCls = k => k === 'material' ? 'badge-material' : k === 'alat' ? 'badge-alat' : 'badge-lainnya';
+const badgeCls = k => k === 'material' ? 'bg-gold text-ink' : 'bg-ink-600 text-slate-light border border-white/10';
 const badgeLbl = k => (k||'lainnya').charAt(0).toUpperCase() + (k||'lainnya').slice(1);
 
 onSnapshot(collection(db, 'products'), snapshot => {
@@ -874,40 +875,100 @@ onSnapshot(collection(db, 'products'), snapshot => {
   items.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
   const track = document.getElementById('barang-track');
-  const countEl = document.getElementById('item-count');
-  if (!grid) return;
+  const viewport = document.getElementById('barang-viewport');
+  const dotsWrap = document.getElementById('barang-dots');
+  const prevBtn = document.getElementById('barang-prev');
+  const nextBtn = document.getElementById('barang-next');
+  if (!track || !viewport) return;
   if (!items.length) return;
 
-  grid.innerHTML = items.map(it => `
-    <div class="katalog-card reveal visible group bg-ink-800 border border-white/8 flex flex-col"
-         data-kategori="${esc(it.kategori||'lainnya')}"
-         data-nama="${esc(it.nama)}"
-         data-harga="${parseInt(it.harga)||0}">
-      <div class="relative overflow-hidden aspect-square bg-ink-700">
+  track.innerHTML = items.map(it => `
+    <div class="barang-card group bg-ink-800 border border-white/8 flex flex-col"
+         data-barangcat="${esc(it.kategori||'lainnya')}">
+      <div class="relative overflow-hidden bg-ink-700" style="height:220px;">
         ${it.foto
-          ? `<img src="${esc(it.foto)}" alt="${esc(it.nama)}" class="card-img w-full h-full object-cover" onerror="this.style.display='none'"/>`
+          ? `<img src="${esc(it.foto)}" alt="${esc(it.nama)}" class="card-img" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>`
           : `<div class="card-img w-full h-full flex items-center justify-center text-slate/20">
-               <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+               <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
              </div>`}
-        <div class="card-overlay absolute inset-0 bg-gold/8 flex items-center justify-center">
-          <button onclick="openDetail(this)" class="bg-ink-900/80 border border-gold text-gold font-mono text-xs tracking-widest uppercase px-5 py-2 hover:bg-gold hover:text-ink transition-all">Lihat Detail</button>
-        </div>
         <div class="absolute top-3 left-3">
-          <span class="${badgeCls(it.kategori)} font-mono text-xs px-2 py-1 tracking-widest uppercase">${badgeLbl(it.kategori)}</span>
+          <span class="${badgeCls(it.kategori)} font-mono text-[10px] px-2 py-1 tracking-widest uppercase">${badgeLbl(it.kategori)}</span>
         </div>
+        <div class="absolute inset-0 bg-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       </div>
       <div class="p-5 flex flex-col flex-1">
         <h3 class="font-display text-base font-bold text-cream mb-1">${esc(it.nama)}</h3>
         <p class="font-body text-xs text-slate-light leading-relaxed flex-1 mb-4">${esc(it.deskripsi||'')}</p>
         <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
-          <span class="font-mono text-gold font-bold">${fmt(it.harga)}</span>
-          <a href="Home.html#contact" class="font-mono text-xs text-slate border border-white/10 px-3 py-1.5 hover:border-gold hover:text-gold transition-all">Pesan</a>
+          <span class="font-mono text-gold font-bold text-sm">${fmt(it.harga)}</span>
+          <a href="#contact" class="font-mono text-[10px] text-slate border border-white/10 px-3 py-1.5 hover:border-gold hover:text-gold transition-all uppercase tracking-widest">Pesan</a>
         </div>
       </div>
     </div>`).join('');
 
-  if (countEl) countEl.textContent = items.length + ' item';
-}, err => console.warn('[katalog] Firestore error:', err.message));
+  // Rebind filter buttons
+  document.querySelectorAll('.barang-btn').forEach(btn => {
+    const fresh = btn.cloneNode(true);
+    btn.parentNode.replaceChild(fresh, btn);
+    fresh.addEventListener('click', function(){
+      document.querySelectorAll('.barang-btn').forEach(b => { b.classList.remove('active'); b.style.background=''; b.style.color=''; });
+      this.classList.add('active');
+      const cat = this.dataset.cat;
+      track.querySelectorAll('.barang-card').forEach(card => {
+        const show = cat === 'all' || card.dataset.barangcat === cat;
+        card.style.opacity = show ? '1' : '0.15';
+        card.style.pointerEvents = show ? 'auto' : 'none';
+      });
+      setTimeout(reinitCarousel, 30);
+    });
+  });
+
+  // Carousel
+  function getVisible(){ return window.innerWidth < 640 ? 1 : window.innerWidth < 1024 ? 2 : 4; }
+  let currentIndex = 0;
+  function getCards(){ return Array.from(track.querySelectorAll('.barang-card')).filter(c => c.style.pointerEvents !== 'none'); }
+  function setCardWidths(){
+    const vis = getVisible(), gap = 20, vw = viewport.offsetWidth;
+    const w = Math.floor((vw - gap*(vis-1)) / vis);
+    getCards().forEach(c => { c.style.width=w+'px'; c.style.minWidth=w+'px'; c.style.maxWidth=w+'px'; c.style.flexShrink='0'; });
+  }
+  function buildDots(){
+    if (!dotsWrap) return;
+    dotsWrap.innerHTML = '';
+    const total = Math.max(1, Math.ceil(getCards().length / getVisible()));
+    for (let i=0; i<total; i++){
+      const d = document.createElement('button');
+      d.className = 'h-2 rounded-full transition-all duration-300 ' + (i===0 ? 'bg-gold w-5' : 'bg-white/20 w-2');
+      d.addEventListener('click', () => goTo(i));
+      dotsWrap.appendChild(d);
+    }
+  }
+  function updateDots(){
+    if (!dotsWrap) return;
+    dotsWrap.querySelectorAll('button').forEach((d,i) => {
+      d.className = 'h-2 rounded-full transition-all duration-300 ' + (i===currentIndex ? 'bg-gold w-5' : 'bg-white/20 w-2');
+    });
+  }
+  function goTo(index){
+    const cards = getCards(), vis = getVisible();
+    const maxIndex = Math.max(0, Math.ceil(cards.length/vis)-1);
+    currentIndex = Math.max(0, Math.min(index, maxIndex));
+    const gap=20, vw=viewport.offsetWidth;
+    const cardW = Math.floor((vw - gap*(vis-1)) / vis);
+    track.style.transition = 'transform .5s cubic-bezier(.16,1,.3,1)';
+    track.style.transform = `translateX(-${currentIndex*(cardW+gap)*vis}px)`;
+    updateDots();
+    if (prevBtn) prevBtn.style.opacity = currentIndex===0 ? '0.3' : '1';
+    if (nextBtn) nextBtn.style.opacity = currentIndex>=maxIndex ? '0.3' : '1';
+  }
+  function reinitCarousel(){ setCardWidths(); buildDots(); goTo(0); }
+
+  if (prevBtn) prevBtn.addEventListener('click', () => goTo(currentIndex-1));
+  if (nextBtn) nextBtn.addEventListener('click', () => goTo(currentIndex+1));
+  window.addEventListener('resize', reinitCarousel);
+  setTimeout(reinitCarousel, 80);
+
+}, err => console.warn('[Home] Firestore error:', err.message));
 </script>
 
 <script>
