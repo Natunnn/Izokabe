@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin — Izokabe Barang</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { display:['Playfair Display','serif'], body:['DM Sans','sans-serif'], mono:['DM Mono','monospace'] },
+  colors: {
+    ink:{DEFAULT:'#0d0d0d',900:'#0d0d0d',800:'#1a1a1a',700:'#2a2a2a',600:'#3a3a3a'},
+    cream:{DEFAULT:'#f5f0e8',light:'#faf7f2'},
+    gold:{DEFAULT:'#c9a84c',light:'#e2c97e',dark:'#a0822a'},
+    slate:{DEFAULT:'#8a8f99',light:'#b4b9c4'},
+  },
+}}}
+</script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0d0d0d;color:#f5f0e8;font-family:'DM Sans',sans-serif;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");opacity:.4;pointer-events:none;z-index:9990}
+  input,select,textarea{background:#1a1a1a;border:1px solid rgba(255,255,255,.1);color:#f5f0e8;transition:border-color .2s;border-radius:0}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(201,168,76,.6)}
+  .item-row{transition:all .25s;border:1px solid rgba(255,255,255,.08)}
+  .item-row:hover{border-color:rgba(201,168,76,.4)}
+  .btn-gold{transition:all .25s}
+  .btn-gold:hover{background:#c9a84c;color:#0d0d0d}
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:#1a1a1a}
+  ::-webkit-scrollbar-thumb{background:#c9a84c;border-radius:3px}
+  .dropzone.dragover{border-color:#c9a84c;background:rgba(201,168,76,.05)}
+</style>
+</head>
+<body>
+
+<nav class="fixed top-0 w-full z-50 py-4 px-6 md:px-12 flex items-center justify-between bg-ink-900/90 backdrop-blur-md border-b border-white/5">
+  <a href="katalog.html" class="font-display text-lg font-bold text-cream flex items-center gap-2">
+    <svg class="w-4 h-4 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    Izokabe<span class="text-gold">.</span>Admin
+  </a>
+  <div class="flex items-center gap-4">
+    <a href="katalog.html" target="_blank" class="font-mono text-xs tracking-widest uppercase text-slate hover:text-gold transition-colors">Katalog ↗</a>
+    <a href="Home.html#barang" target="_blank" class="font-mono text-xs tracking-widest uppercase text-slate hover:text-gold transition-colors">Portfolio · Barang ↗</a>
+  </div>
+</nav>
+
+<main class="max-w-7xl mx-auto px-6 md:px-12 pt-28 pb-20">
+
+  <div class="mb-8">
+    <p class="font-mono text-gold text-xs tracking-[0.3em] uppercase mb-2">— Dashboard Produk</p>
+    <h1 class="font-display text-3xl md:text-5xl font-black leading-tight">Kelola <em class="italic gradient-text">Barang</em></h1>
+    <p class="font-body text-slate-light mt-3 text-sm max-w-2xl">Barang yang ditambahkan di sini akan otomatis tampil di <b>katalog.html</b> dan section <b>Barang</b> pada <b>portfolio (1).html</b>.</p>
+  </div>
+
+  <section class="grid lg:grid-cols-[420px_1fr] gap-8">
+
+    <!-- FORM -->
+    <div class="bg-ink-800 border border-white/10 p-6 h-fit lg:sticky lg:top-24">
+      <h2 id="form-title" class="font-display text-xl font-bold mb-5">Tambah Barang Baru</h2>
+      <form id="form-barang" class="space-y-4">
+        <input type="hidden" name="id"/>
+
+        <div>
+          <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Nama Barang *</label>
+          <input required name="nama" type="text" placeholder="mis. Keramik Granit 60x60" class="w-full px-3 py-2.5 text-sm"/>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Kategori *</label>
+            <select required name="kategori" class="w-full px-3 py-2.5 text-sm">
+              <option value="material">Material</option>
+              <option value="alat">Alat</option>
+              <option value="lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Harga (Rp) *</label>
+            <input required name="harga" type="number" min="0" placeholder="0" class="w-full px-3 py-2.5 text-sm"/>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Deskripsi</label>
+          <textarea name="deskripsi" rows="3" placeholder="Deskripsi singkat..." class="w-full px-3 py-2.5 text-sm resize-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Foto Barang</label>
+          <div id="dropzone" class="dropzone border border-dashed border-white/15 p-4 text-center cursor-pointer hover:border-gold/50 transition-all">
+            <input id="file-input" type="file" accept="image/*" class="hidden"/>
+            <svg class="w-8 h-8 mx-auto text-slate/40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <p class="font-mono text-xs text-slate">Klik / drop gambar<br/><span class="text-slate/50">Auto-compress ≤800px</span></p>
+          </div>
+          <div class="mt-2">
+            <label class="block font-mono text-[10px] tracking-widest uppercase text-slate/60 mb-1">atau URL gambar:</label>
+            <input name="foto_url" type="url" placeholder="https://..." class="w-full px-3 py-2 text-xs"/>
+          </div>
+          <div id="preview" class="mt-3 hidden">
+            <div class="relative w-full aspect-square bg-ink-700 overflow-hidden border border-white/10">
+              <img class="w-full h-full object-cover"/>
+              <button type="button" data-clear-preview class="absolute top-2 right-2 bg-ink-900/90 border border-white/20 text-cream w-7 h-7 flex items-center justify-center hover:bg-red-500/80 hover:border-red-500 transition-all text-sm">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="submit" class="btn-gold flex-1 border border-gold text-gold font-mono text-xs tracking-widest uppercase py-3">Simpan</button>
+          <button type="button" id="reset-form" class="border border-white/15 text-slate font-mono text-xs tracking-widest uppercase px-4 hover:border-white/40 hover:text-cream transition-all">Reset</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- LIST -->
+    <div>
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <h2 class="font-display text-xl font-bold">Daftar Barang <span class="font-mono text-sm text-slate" id="count">(0)</span></h2>
+        <input id="search" type="text" placeholder="Cari barang..." class="px-3 py-2 text-xs w-48"/>
+      </div>
+      <div id="list" class="space-y-3"></div>
+      <div id="empty" class="hidden text-center py-16 border border-dashed border-white/10">
+        <p class="font-mono text-xs text-slate">Belum ada barang. Tambahkan dari form.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ MIGRASI MANUAL ═══ -->
+<div class="mt-16 pt-8 border-t border-white/10">
+  <h2 class="font-mono text-xs tracking-widest uppercase text-slate mb-4">— Migrasi Manual (opsional)</h2>
+  <p class="font-body text-sm text-slate-light mb-4 max-w-2xl">
+    Kalau barang di portfolio (1).html belum muncul di sini, tempel <b>source code HTML</b> dari portfolio (1).html di bawah, lalu klik ekstrak.
+  </p>
+  <textarea id="paste-source" rows="6" placeholder="Tempel HTML portfolio (1).html di sini..." class="w-full px-3 py-2.5 text-xs font-mono"></textarea>
+  <div class="flex gap-2 mt-3">
+    <button id="extract-btn" class="border border-gold text-gold font-mono text-xs tracking-widest uppercase px-5 py-2.5 hover:bg-gold hover:text-ink transition-all">Ekstrak Barang</button>
+    <button id="merge-btn" class="border border-white/15 text-slate font-mono text-xs tracking-widest uppercase px-5 py-2.5 hover:border-gold hover:text-gold transition-all" disabled>Gabung ke Dashboard</button>
+  </div>
+  <p id="extract-info" class="font-mono text-[10px] text-slate/60 mt-3"></p>
+</div>
+
+  <!-- BACKUP -->
+  <div class="mt-16 pt-8 border-t border-white/10">
+    <h2 class="font-mono text-xs tracking-widest uppercase text-slate mb-4">— Backup & Restore</h2>
+    <div class="flex flex-wrap gap-3">
+      <button id="export-btn" class="border border-white/15 text-slate font-mono text-xs tracking-widest uppercase px-5 py-3 hover:border-gold hover:text-gold transition-all">⬇ Export JSON</button>
+      <label class="border border-white/15 text-slate font-mono text-xs tracking-widest uppercase px-5 py-3 hover:border-gold hover:text-gold transition-all cursor-pointer">
+        ⬆ Import JSON
+        <input id="import-input" type="file" accept="application/json" class="hidden"/>
+      </label>
+      <button id="clear-btn" class="border border-red-500/30 text-red-400 font-mono text-xs tracking-widest uppercase px-5 py-3 hover:bg-red-500/10 hover:border-red-500 transition-all">⚠ Reset ke Default</button>
+    </div>
+    <p class="font-mono text-[10px] text-slate/60 mt-3">Data disimpan di browser ini (localStorage). Buka katalog.html & portfolio (1).html di browser yang sama untuk melihat perubahannya.</p>
+  </div>
+</main>
+
+<div id="toast" class="fixed bottom-6 right-6 z-[9999] hidden">
+  <div class="bg-ink-800 border border-gold/50 px-5 py-3 shadow-2xl">
+    <p id="toast-msg" class="font-mono text-xs text-cream tracking-wide"></p>
+  </div>
+</div>
+
+<script>
+/* ══════════════ STORAGE ══════════════ */
+const KEY = 'izokabe_katalog'; // dipakai bersama oleh katalog.html & portfolio (1).html
+
+const DEFAULT_DATA = [
+  { id:'k1', nama:'Keramik Granit Premium 60x60', kategori:'material', harga:185000, deskripsi:'Keramik granit premium tahan gores, tersedia berbagai motif.', foto:null },
+  { id:'k2', nama:'Semen Instan 40kg', kategori:'material', harga:65000, deskripsi:'Semen instan kualitas tinggi untuk berbagai kebutuhan.', foto:null },
+  { id:'k3', nama:'Bor Listrik 500W', kategori:'alat', harga:520000, deskripsi:'Bor listrik ringan & bertenaga untuk pekerjaan interior.', foto:null },
+  { id:'k4', nama:'Cat Tembok Premium 5kg', kategori:'lainnya', harga:120000, deskripsi:'Cat tembok premium dengan hasil akhir halus & tahan lama.', foto:null },
+];
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) { localStorage.setItem(KEY, JSON.stringify(DEFAULT_DATA)); return [...DEFAULT_DATA]; }
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? v : [...DEFAULT_DATA];
+  } catch { return [...DEFAULT_DATA]; }
+}
+function save(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
+const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtRp = n => 'Rp ' + (parseInt(n)||0).toLocaleString('id-ID');
+const uid = () => 'k_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+
+/* ══════════════ IMAGE COMPRESS ══════════════ */
+function compressImage(file, maxSize = 800, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxSize) { height = Math.round(height*maxSize/width); width = maxSize; }
+        else if (height > maxSize) { width = Math.round(width*maxSize/height); height = maxSize; }
+        const c = document.createElement('canvas');
+        c.width = width; c.height = height;
+        c.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(c.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+/* ══════════════ TOAST ══════════════ */
+const toast = document.getElementById('toast');
+const toastMsg = document.getElementById('toast-msg');
+let toastTimer;
+function showToast(msg, isError = false) {
+  toastMsg.textContent = msg;
+  toast.classList.remove('hidden');
+  toast.querySelector('div').style.borderColor = isError ? 'rgba(248,113,113,.6)' : 'rgba(201,168,76,.5)';
+  toastMsg.style.color = isError ? '#f87171' : '#f5f0e8';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.add('hidden'), 2400);
+}
+
+/* ══════════════ FORM STATE ══════════════ */
+let pendingFoto = null;
+let searchQ = '';
+const form = document.getElementById('form-barang');
+const listEl = document.getElementById('list');
+const emptyEl = document.getElementById('empty');
+const countEl = document.getElementById('count');
+const titleEl = document.getElementById('form-title');
+const previewEl = document.getElementById('preview');
+
+function badgeCls(kat) {
+  return kat === 'material' ? 'bg-gold text-ink-900 border-gold' : 'bg-ink-700 text-slate-light border-white/10';
+}
+function badgeLbl(kat) {
+  return (kat||'lainnya').charAt(0).toUpperCase() + (kat||'lainnya').slice(1);
+}
+
+function render() {
+  const all = load();
+  const items = searchQ
+    ? all.filter(x => (x.nama||'').toLowerCase().includes(searchQ.toLowerCase()))
+    : all;
+
+  countEl.textContent = `(${all.length})`;
+  emptyEl.classList.toggle('hidden', items.length > 0);
+
+  listEl.innerHTML = items.map(it => `
+    <div class="item-row bg-ink-800 p-3 flex gap-3 items-center">
+      <div class="w-16 h-16 shrink-0 bg-ink-700 overflow-hidden">
+        ${it.foto
+          ? `<img src="${it.foto}" class="w-full h-full object-cover" onerror="this.style.display='none'"/>`
+          : `<div class="w-full h-full flex items-center justify-center text-slate/30 text-[10px] font-mono">N/A</div>`}
+      </div>
+      <div class="flex-1 min-w-0">
+        <span class="inline-block font-mono text-[9px] tracking-widest uppercase border px-2 py-[2px] mb-1 ${badgeCls(it.kategori)}">${esc(it.kategori)}</span>
+        <h3 class="font-display font-bold text-sm truncate">${esc(it.nama)}</h3>
+        <p class="font-mono text-[11px] text-gold">${fmtRp(it.harga)}</p>
+        <p class="font-body text-[11px] text-slate truncate">${esc(it.deskripsi||'—')}</p>
+      </div>
+      <div class="flex flex-col gap-1 shrink-0">
+        <button data-edit="${it.id}" class="font-mono text-[10px] tracking-widest uppercase border border-white/15 text-slate px-3 py-1.5 hover:border-gold hover:text-gold transition-all">Edit</button>
+        <button data-del="${it.id}" class="font-mono text-[10px] tracking-widest uppercase border border-red-500/30 text-red-400 px-3 py-1.5 hover:bg-red-500/10 hover:border-red-500 transition-all">Hapus</button>
+      </div>
+    </div>`).join('');
+
+  listEl.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => editItem(b.dataset.edit)));
+  listEl.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => delItem(b.dataset.del)));
+}
+
+function showPreview(src) {
+  if (!src) { previewEl.classList.add('hidden'); return; }
+  previewEl.querySelector('img').src = src;
+  previewEl.classList.remove('hidden');
+}
+
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const fd = new FormData(form);
+  const id = fd.get('id');
+  const nama = (fd.get('nama')||'').trim();
+  const kategori = fd.get('kategori');
+  const harga = parseInt(fd.get('harga')) || 0;
+  const deskripsi = (fd.get('deskripsi')||'').trim();
+  const fotoUrl = (fd.get('foto_url')||'').trim();
+
+  if (!nama) return showToast('Nama barang wajib diisi', true);
+
+  const items = load();
+  let finalFoto = pendingFoto;
+  if (!finalFoto && fotoUrl) finalFoto = fotoUrl;
+
+  if (id) {
+    const idx = items.findIndex(x => x.id === id);
+    if (idx >= 0) items[idx] = { ...items[idx], nama, kategori, harga, deskripsi, foto: finalFoto !== null ? finalFoto : items[idx].foto };
+    showToast('Barang berhasil diupdate');
+  } else {
+    items.push({ id: uid(), nama, kategori, harga, deskripsi, foto: finalFoto || null });
+    showToast('Barang berhasil ditambahkan');
+  }
+  save(items);
+  resetForm();
+  render();
+});
+
+function editItem(id) {
+  const it = load().find(x => x.id === id);
+  if (!it) return;
+  form.id.value = it.id;
+  form.nama.value = it.nama;
+  form.kategori.value = it.kategori;
+  form.harga.value = it.harga;
+  form.deskripsi.value = it.deskripsi || '';
+  form.foto_url.value = '';
+  pendingFoto = it.foto || null;
+  showPreview(it.foto || null);
+  titleEl.textContent = 'Edit Barang';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function delItem(id) {
+  if (!confirm('Hapus barang ini?')) return;
+  save(load().filter(x => x.id !== id));
+  render();
+  showToast('Barang dihapus');
+}
+
+function resetForm() {
+  form.reset();
+  form.id.value = '';
+  pendingFoto = null;
+  document.getElementById('file-input').value = '';
+  showPreview(null);
+  titleEl.textContent = 'Tambah Barang Baru';
+}
+document.getElementById('reset-form').addEventListener('click', resetForm);
+
+/* ══════════════ FILE HANDLERS ══════════════ */
+const dz = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+dz.addEventListener('click', () => fileInput.click());
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', async e => {
+  e.preventDefault(); dz.classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if (f) await handleFile(f);
+});
+fileInput.addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (f) await handleFile(f);
+});
+async function handleFile(file) {
+  try {
+    const c = await compressImage(file);
+    pendingFoto = c;
+    showPreview(c);
+    showToast('Foto siap disimpan');
+  } catch { showToast('Gagal membaca gambar', true); }
+}
+previewEl.querySelector('[data-clear-preview]').addEventListener('click', () => {
+  pendingFoto = null;
+  fileInput.value = '';
+  showPreview(null);
+});
+
+/* ══════════════ SEARCH ══════════════ */
+document.getElementById('search').addEventListener('input', e => {
+  searchQ = e.target.value;
+  render();
+});
+
+/* ══════════════ EXPORT / IMPORT / RESET ══════════════ */
+document.getElementById('export-btn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify({ exported_at: new Date().toISOString(), items: load() }, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `izokabe-barang-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Backup berhasil diunduh');
+});
+
+document.getElementById('import-input').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    const items = Array.isArray(data) ? data : data.items;
+    if (!Array.isArray(items)) throw new Error();
+    save(items);
+    render();
+    showToast('Import berhasil');
+  } catch { showToast('File JSON tidak valid', true); }
+  e.target.value = '';
+});
+
+document.getElementById('clear-btn').addEventListener('click', () => {
+  if (!confirm('Reset barang ke data default? Semua perubahan akan hilang.')) return;
+  localStorage.removeItem(KEY);
+  render();
+  showToast('Data direset ke default');
+});
+
+/* ══════════════ INIT ══════════════ */
+/* ══════════════ MIGRASI MANUAL ══════════════ */
+let extractedItems = null;
+const pasteEl = document.getElementById('paste-source');
+const infoEl = document.getElementById('extract-info');
+const mergeBtn = document.getElementById('merge-btn');
+
+document.getElementById('extract-btn').addEventListener('click', () => {
+  const html = pasteEl.value.trim();
+  if (!html) return showToast('Tempel dulu HTML-nya', true);
+
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const cards = doc.querySelectorAll('.barang-card');
+    if (!cards.length) { infoEl.textContent = 'Tidak ditemukan .barang-card di HTML tersebut.'; mergeBtn.disabled = true; return; }
+
+    extractedItems = Array.from(cards).map(card => {
+      const nameEl = card.querySelector('h3, h4, [class*="title"]');
+      const img = card.querySelector('img');
+      const descEl = card.querySelector('p');
+      const text = card.textContent || '';
+      const m = text.match(/Rp\s*([\d.,]+)/i);
+      const kategori = (card.dataset.barangcat || card.dataset.cat || 'material').toLowerCase();
+      return {
+        id: uid(),
+        nama: nameEl ? nameEl.textContent.trim() : 'Barang',
+        kategori: ['material','alat','lainnya'].includes(kategori) ? kategori : 'lainnya',
+        harga: m ? parseInt(m[1].replace(/[.,]/g,'')) : 0,
+        deskripsi: descEl ? descEl.textContent.trim() : '',
+        foto: img ? img.src : null,
+      };
+    }).filter(x => x.nama && x.nama !== 'Barang');
+
+    infoEl.textContent = `✓ Ditemukan ${extractedItems.length} barang. Klik "Gabung ke Dashboard" untuk menyimpan.`;
+    mergeBtn.disabled = extractedItems.length === 0;
+  } catch (e) {
+    showToast('Gagal parse HTML', true);
+  }
+});
+
+mergeBtn.addEventListener('click', () => {
+  if (!extractedItems || !extractedItems.length) return;
+  const existing = load();
+  const existingNames = new Set(existing.map(x => x.nama.toLowerCase()));
+  let added = 0;
+  extractedItems.forEach(it => {
+    if (!existingNames.has(it.nama.toLowerCase())) { existing.push(it); added++; }
+  });
+  save(existing);
+  render();
+  showToast(`${added} barang baru digabungkan`);
+  mergeBtn.disabled = true;
+  pasteEl.value = '';
+  infoEl.textContent = '';
+});
+
+render();
+</script>
+</body>
+</html>

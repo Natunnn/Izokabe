@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Katalog Barang — Izokabe</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Playfair Display', 'serif'],
+            body: ['DM Sans', 'sans-serif'],
+            mono: ['DM Mono', 'monospace'],
+          },
+          colors: {
+            ink:   { DEFAULT: '#0d0d0d', 900: '#0d0d0d', 800: '#1a1a1a', 700: '#2a2a2a', 600: '#3a3a3a' },
+            cream: { DEFAULT: '#f5f0e8', light: '#faf7f2' },
+            gold:  { DEFAULT: '#c9a84c', light: '#e2c97e', dark: '#a0822a' },
+            slate: { DEFAULT: '#8a8f99', light: '#b4b9c4' },
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: #0d0d0d; color: #f5f0e8; font-family: 'DM Sans', sans-serif; overflow-x: hidden; cursor: none; }
+
+    /* Noise */
+    body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"); opacity:.4; pointer-events:none; z-index:9990; }
+
+    /* Cursor */
+    #cursor { position:fixed; width:12px; height:12px; background:#c9a84c; border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); transition:width .2s,height .2s,background .2s; }
+    #cursor-ring { position:fixed; width:36px; height:36px; border:1px solid rgba(201,168,76,.4); border-radius:50%; pointer-events:none; z-index:9998; transform:translate(-50%,-50%); transition:width .2s,height .2s; }
+    @media (pointer: coarse) { #cursor, #cursor-ring { display:none; } body { cursor:auto; } }
+
+    .gold-line { height:1px; background:linear-gradient(to right, transparent, #c9a84c, transparent); }
+
+    /* Card */
+    .katalog-card { transition: transform .35s cubic-bezier(.16,1,.3,1), box-shadow .35s, border-color .25s; }
+    .katalog-card:hover { transform: translateY(-5px); box-shadow: 0 24px 48px rgba(0,0,0,.5); border-color: rgba(201,168,76,.45) !important; }
+    .katalog-card:hover .card-img { transform: scale(1.06); }
+    .card-img { transition: transform .5s cubic-bezier(.16,1,.3,1); }
+    .katalog-card:hover .card-overlay { opacity: 1; }
+    .card-overlay { opacity: 0; transition: opacity .3s; }
+
+    /* Reveal */
+    .reveal { opacity:0; transform:translateY(24px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+    .reveal-delay-1 { transition-delay:.08s; }
+    .reveal-delay-2 { transition-delay:.16s; }
+    .reveal-delay-3 { transition-delay:.24s; }
+    .reveal-delay-4 { transition-delay:.32s; }
+
+    /* Filter btn */
+    .filter-btn { transition: all .25s; }
+    .filter-btn.active { background:#c9a84c; color:#0d0d0d; border-color:#c9a84c; }
+    .filter-btn:not(.active):hover { border-color:#c9a84c; color:#c9a84c; }
+
+    /* Nav link */
+    .nav-link { position:relative; }
+    .nav-link::after { content:''; position:absolute; bottom:-2px; left:0; width:0; height:1px; background:#c9a84c; transition:width .3s; }
+    .nav-link:hover::after { width:100%; }
+
+    /* Gradient text */
+    .gradient-text { background:linear-gradient(135deg,#e2c97e 0%,#c9a84c 50%,#a0822a 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:#1a1a1a; }
+    ::-webkit-scrollbar-thumb { background:#c9a84c; border-radius:2px; }
+
+    /* Lightbox */
+    #lightbox { display:none; position:fixed; inset:0; background:rgba(13,13,13,.96); z-index:9000; align-items:center; justify-content:center; }
+    #lightbox.open { display:flex; animation:fadeIn .3s ease; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+    /* Search bar */
+    #search-input:focus { outline:none; border-color:rgba(201,168,76,.6); }
+
+    /* Badge kategori */
+    .badge-material { background:#c9a84c; color:#0d0d0d; }
+    .badge-alat { background:#2a2a2a; color:#b4b9c4; border:1px solid rgba(255,255,255,.1); }
+    .badge-lainnya { background:#2a2a2a; color:#b4b9c4; border:1px solid rgba(255,255,255,.1); }
+
+    /* Empty state */
+    #empty-state { display:none; }
+    #empty-state.show { display:flex; }
+
+    /* Ticker */
+    .ticker-inner { display:flex; white-space:nowrap; animation:ticker 26s linear infinite; }
+    .ticker-inner span { display:inline-block; padding:0 2.5rem; }
+    @keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+    /* Btn primary */
+    .btn-primary { position:relative; overflow:hidden; }
+    .btn-primary::before { content:''; position:absolute; inset:0; background:#c9a84c; transform:translateX(-101%); transition:transform .4s cubic-bezier(.16,1,.3,1); z-index:0; }
+    .btn-primary:hover::before { transform:translateX(0); }
+    .btn-primary span { position:relative; z-index:1; }
+    .btn-primary:hover span { color:#0d0d0d; }
+  </style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav id="navbar" class="fixed top-0 w-full z-50 transition-all duration-500 py-5 px-8 md:px-16 flex items-center justify-between bg-ink-900/80 backdrop-blur-md border-b border-white/5">
+  <a href="Home.html" class="font-display text-xl font-bold tracking-tight text-cream flex items-center gap-2">
+    <svg class="w-4 h-4 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    Izokabe<span class="text-gold">.</span>Work
+  </a>
+  <div class="flex items-center gap-3">
+    <span class="font-mono text-xs text-slate tracking-widest uppercase hidden md:block">Katalog Barang</span>
+    <span class="text-gold/30 hidden md:block">—</span>
+    <span id="item-count" class="font-mono text-xs text-gold tracking-widest">0 item</span>
+  </div>
+</nav>
+
+<!-- ═══ HERO BANNER ═══ -->
+<div class="pt-20">
+  <div class="relative py-20 px-6 md:px-16 overflow-hidden bg-ink-800/60 border-b border-white/5">
+    <!-- Grid bg -->
+    <div class="absolute inset-0 opacity-5" style="background-image:linear-gradient(rgba(201,168,76,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,.3) 1px,transparent 1px);background-size:60px 60px;"></div>
+    <div class="relative max-w-7xl mx-auto">
+      <p class="font-mono text-gold text-xs tracking-[0.3em] uppercase mb-3">— Izokabe Work Portfolio</p>
+      <h1 class="font-display text-4xl md:text-6xl font-black mb-4 leading-tight">
+        Katalog <em class="italic gradient-text">Lengkap</em>
+      </h1>
+      <p class="font-body text-slate-light max-w-lg text-base leading-relaxed">
+        Semua produk dan material yang kami sediakan. Gunakan filter atau pencarian untuk menemukan barang yang Anda butuhkan.
+      </p>
+    </div>
+  </div>
+
+  <!-- Ticker -->
+  <div class="py-3 border-b border-gold/10 overflow-hidden bg-ink-900/50">
+    <div class="ticker-inner text-xs font-mono text-slate tracking-widest">
+      <span>Konstruksi</span><span class="text-gold">✦</span>
+      <span>Renovasi</span><span class="text-gold">✦</span>
+      <span>Material Premium</span><span class="text-gold">✦</span>
+      <span>Pemasangan Lantai</span><span class="text-gold">✦</span>
+      <span>Plafon & Partisi</span><span class="text-gold">✦</span>
+      <span>Cat & Finishing</span><span class="text-gold">✦</span>
+      <span>Izokabe</span><span class="text-gold">✦</span>
+      <span>Konstruksi</span><span class="text-gold">✦</span>
+      <span>Renovasi</span><span class="text-gold">✦</span>
+      <span>Material Premium</span><span class="text-gold">✦</span>
+      <span>Pemasangan Lantai</span><span class="text-gold">✦</span>
+      <span>Plafon & Partisi</span><span class="text-gold">✦</span>
+      <span>Cat & Finishing</span><span class="text-gold">✦</span>
+      <span>Izokabe</span><span class="text-gold">✦</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOOLBAR (Search + Filter + Sort) ═══ -->
+<div class="sticky top-[69px] z-40 bg-ink-900/90 backdrop-blur-md border-b border-white/5 px-6 md:px-16 py-4">
+  <div class="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+
+    <!-- Search -->
+    <div class="relative w-full md:w-80">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input id="search-input" type="text" placeholder="Cari nama barang..." class="w-full bg-ink-800 border border-white/10 text-cream pl-10 pr-4 py-2.5 text-sm font-body transition-colors placeholder-slate/40"/>
+    </div>
+
+    <!-- Filter & Sort -->
+    <div class="flex flex-wrap gap-2 items-center">
+      <div class="flex flex-wrap gap-2" id="filter-btns">
+        <button class="filter-btn active font-mono text-xs tracking-widest uppercase px-4 py-2 border border-gold/30 text-cream" data-filter="all">Semua</button>
+        <button class="filter-btn font-mono text-xs tracking-widest uppercase px-4 py-2 border border-white/10 text-slate" data-filter="material">Material</button>
+        <button class="filter-btn font-mono text-xs tracking-widest uppercase px-4 py-2 border border-white/10 text-slate" data-filter="alat">Alat</button>
+        <button class="filter-btn font-mono text-xs tracking-widest uppercase px-4 py-2 border border-white/10 text-slate" data-filter="lainnya">Lainnya</button>
+      </div>
+      <select id="sort-select" class="bg-ink-800 border border-white/10 text-slate font-mono text-xs tracking-widest uppercase px-3 py-2.5 focus:outline-none focus:border-gold/50">
+        <option value="default">Urutan Default</option>
+        <option value="harga-asc">Harga: Termurah</option>
+        <option value="harga-desc">Harga: Termahal</option>
+        <option value="nama-asc">Nama: A–Z</option>
+        <option value="nama-desc">Nama: Z–A</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CATALOG GRID ═══ -->
+<main class="max-w-7xl mx-auto px-6 md:px-16 py-14">
+
+  <!-- Grid -->
+  <div id="katalog-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+
+    <!-- ══ TEMPLATE KARTU — duplikat & ganti isi sesuai barang asli ══ -->
+
+    <div class="katalog-card reveal group bg-ink-800 border border-white/8 flex flex-col"
+         data-kategori="material" data-nama="Nama Barang 1" data-harga="0">
+      <div class="relative overflow-hidden aspect-square bg-ink-700">
+        <!-- Ganti src dengan path foto: ../Foto/nama-file.jpg -->
+        <div class="card-img w-full h-full flex items-center justify-center text-slate/20">
+          <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <div class="card-overlay absolute inset-0 bg-gold/8 flex items-center justify-center">
+          <button onclick="openDetail(this)" class="bg-ink-900/80 border border-gold text-gold font-mono text-xs tracking-widest uppercase px-5 py-2 hover:bg-gold hover:text-ink transition-all">Lihat Detail</button>
+        </div>
+        <div class="absolute top-3 left-3">
+          <span class="badge-material font-mono text-xs px-2 py-1 tracking-widest uppercase">Material</span>
+        </div>
+      </div>
+      <div class="p-5 flex flex-col flex-1">
+        <h3 class="font-display text-base font-bold text-cream mb-1">Nama Barang 1</h3>
+        <p class="font-body text-xs text-slate-light leading-relaxed flex-1 mb-4">Deskripsi singkat barang ini. Kualitas premium, tahan lama.</p>
+        <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+          <span class="font-mono text-gold font-bold">Rp 0.000</span>
+          <a href="#contact" onclick="window.opener ? window.opener.location.hash='contact' : null" class="font-mono text-xs text-slate border border-white/10 px-3 py-1.5 hover:border-gold hover:text-gold transition-all">Pesan</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="katalog-card reveal reveal-delay-1 group bg-ink-800 border border-white/8 flex flex-col"
+         data-kategori="material" data-nama="Nama Barang 2" data-harga="0">
+      <div class="relative overflow-hidden aspect-square bg-ink-700">
+        <div class="card-img w-full h-full flex items-center justify-center text-slate/20">
+          <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <div class="card-overlay absolute inset-0 bg-gold/8 flex items-center justify-center">
+          <button onclick="openDetail(this)" class="bg-ink-900/80 border border-gold text-gold font-mono text-xs tracking-widest uppercase px-5 py-2 hover:bg-gold hover:text-ink transition-all">Lihat Detail</button>
+        </div>
+        <div class="absolute top-3 left-3">
+          <span class="badge-material font-mono text-xs px-2 py-1 tracking-widest uppercase">Material</span>
+        </div>
+      </div>
+      <div class="p-5 flex flex-col flex-1">
+        <h3 class="font-display text-base font-bold text-cream mb-1">Nama Barang 2</h3>
+        <p class="font-body text-xs text-slate-light leading-relaxed flex-1 mb-4">Deskripsi singkat barang ini. Tersedia dalam berbagai ukuran.</p>
+        <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+          <span class="font-mono text-gold font-bold">Rp 0.000</span>
+          <a href="portfolio.html#contact" class="font-mono text-xs text-slate border border-white/10 px-3 py-1.5 hover:border-gold hover:text-gold transition-all">Pesan</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="katalog-card reveal reveal-delay-2 group bg-ink-800 border border-white/8 flex flex-col"
+         data-kategori="alat" data-nama="Nama Barang 3" data-harga="0">
+      <div class="relative overflow-hidden aspect-square bg-ink-700">
+        <div class="card-img w-full h-full flex items-center justify-center text-slate/20">
+          <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <div class="card-overlay absolute inset-0 bg-gold/8 flex items-center justify-center">
+          <button onclick="openDetail(this)" class="bg-ink-900/80 border border-gold text-gold font-mono text-xs tracking-widest uppercase px-5 py-2 hover:bg-gold hover:text-ink transition-all">Lihat Detail</button>
+        </div>
+        <div class="absolute top-3 left-3">
+          <span class="badge-alat font-mono text-xs px-2 py-1 tracking-widest uppercase">Alat</span>
+        </div>
+      </div>
+      <div class="p-5 flex flex-col flex-1">
+        <h3 class="font-display text-base font-bold text-cream mb-1">Nama Barang 3</h3>
+        <p class="font-body text-xs text-slate-light leading-relaxed flex-1 mb-4">Deskripsi singkat barang ini. Cocok untuk berbagai kebutuhan.</p>
+        <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+          <span class="font-mono text-gold font-bold">Rp 0.000</span>
+          <a href="portfolio.html#contact" class="font-mono text-xs text-slate border border-white/10 px-3 py-1.5 hover:border-gold hover:text-gold transition-all">Pesan</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="katalog-card reveal reveal-delay-3 group bg-ink-800 border border-white/8 flex flex-col"
+         data-kategori="lainnya" data-nama="Nama Barang 4" data-harga="0">
+      <div class="relative overflow-hidden aspect-square bg-ink-700">
+        <div class="card-img w-full h-full flex items-center justify-center text-slate/20">
+          <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <div class="card-overlay absolute inset-0 bg-gold/8 flex items-center justify-center">
+          <button onclick="openDetail(this)" class="bg-ink-900/80 border border-gold text-gold font-mono text-xs tracking-widest uppercase px-5 py-2 hover:bg-gold hover:text-ink transition-all">Lihat Detail</button>
+        </div>
+        <div class="absolute top-3 left-3">
+          <span class="badge-lainnya font-mono text-xs px-2 py-1 tracking-widest uppercase">Lainnya</span>
+        </div>
+      </div>
+      <div class="p-5 flex flex-col flex-1">
+        <h3 class="font-display text-base font-bold text-cream mb-1">Nama Barang 4</h3>
+        <p class="font-body text-xs text-slate-light leading-relaxed flex-1 mb-4">Deskripsi singkat barang ini. Stok terbatas, segera pesan.</p>
+        <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+          <span class="font-mono text-gold font-bold">Rp 0.000</span>
+          <a href="portfolio.html#contact" class="font-mono text-xs text-slate border border-white/10 px-3 py-1.5 hover:border-gold hover:text-gold transition-all">Pesan</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tambahkan kartu barang baru dengan menduplikat salah satu div.katalog-card di atas -->
+
+  </div>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="flex-col items-center justify-center py-28 text-center">
+    <svg class="w-16 h-16 text-slate/30 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <p class="font-display text-2xl font-bold text-slate mb-2">Tidak ditemukan</p>
+    <p class="font-body text-sm text-slate/60">Coba kata kunci atau kategori yang berbeda.</p>
+    <button onclick="resetFilter()" class="mt-6 font-mono text-xs text-gold border border-gold/40 px-5 py-2 tracking-widest uppercase hover:bg-gold hover:text-ink transition-all">Reset Filter</button>
+  </div>
+
+</main>
+
+<!-- ═══ FOOTER ═══ -->
+<div class="gold-line opacity-20 mx-16"></div>
+<footer class="py-8 px-8 md:px-16 flex flex-col md:flex-row justify-between items-center gap-4">
+  <p class="font-mono text-xs text-slate">© 2026 Izokabe Work Portfolio.</p>
+  <a href="Home.html" class="font-mono text-xs text-gold hover:text-gold-light transition-colors tracking-widest uppercase flex items-center gap-2">
+    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    Kembali ke Portfolio
+  </a>
+</footer>
+
+<!-- ═══ LIGHTBOX DETAIL ═══ -->
+<div id="lightbox" onclick="closeLightbox(event)">
+  <div class="max-w-2xl w-full mx-4 bg-ink-800 border border-white/10 overflow-hidden relative">
+    <button onclick="closeLightbox()" class="absolute top-4 right-4 text-slate hover:text-gold text-lg z-10 font-mono">✕</button>
+    <div class="aspect-video bg-ink-700 flex items-center justify-center" id="lb-img-wrap">
+      <svg class="w-16 h-16 text-slate/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    </div>
+    <div class="p-7">
+      <span id="lb-badge" class="font-mono text-xs text-gold tracking-widest uppercase"></span>
+      <h3 id="lb-title" class="font-display text-2xl font-bold text-cream mt-1 mb-2"></h3>
+      <p id="lb-desc" class="font-body text-sm text-slate-light leading-relaxed mb-5"></p>
+      <div class="flex items-center justify-between pt-4 border-t border-white/8">
+        <span id="lb-harga" class="font-mono text-gold font-bold text-lg"></span>
+        <a href="portfolio.html#contact" class="btn-primary border border-gold text-gold font-mono text-xs tracking-widest uppercase px-6 py-2.5 inline-flex items-center gap-2">
+          <span>Pesan Sekarang</span>
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx=0, my=0, rx=0, ry=0;
+  document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cursor.style.left=mx+'px'; cursor.style.top=my+'px'; });
+  (function anim(){ rx+=(mx-rx)*.12; ry+=(my-ry)*.12; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(anim); })();
+  document.querySelectorAll('a,button,.katalog-card').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{ cursor.style.width='20px'; cursor.style.height='20px'; cursor.style.background='transparent'; cursor.style.border='1px solid #c9a84c'; });
+    el.addEventListener('mouseleave',()=>{ cursor.style.width='12px'; cursor.style.height='12px'; cursor.style.background='#c9a84c'; cursor.style.border='none'; });
+  });
+
+  // Reveal
+  const obs = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); }});
+  },{ threshold:.1, rootMargin:'0px 0px -30px 0px' });
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+  // ── Filter + Search + Sort
+  let activeFilter = 'all';
+  let searchQuery = '';
+  let sortMode = 'default';
+
+  function getAllCards() {
+    return Array.from(document.querySelectorAll('.katalog-card'));
+  }
+
+  function parseHarga(card) {
+    return parseInt(card.dataset.harga) || 0;
+  }
+
+  function applyAll() {
+    const cards = getAllCards();
+    let visible = cards.filter(card => {
+      const kat = card.dataset.kategori || '';
+      const nama = (card.dataset.nama || '').toLowerCase();
+      const matchFilter = activeFilter === 'all' || kat === activeFilter;
+      const matchSearch = nama.includes(searchQuery.toLowerCase());
+      return matchFilter && matchSearch;
+    });
+
+    // Sort
+    if (sortMode === 'harga-asc') visible.sort((a,b) => parseHarga(a) - parseHarga(b));
+    else if (sortMode === 'harga-desc') visible.sort((a,b) => parseHarga(b) - parseHarga(a));
+    else if (sortMode === 'nama-asc') visible.sort((a,b) => (a.dataset.nama||'').localeCompare(b.dataset.nama||''));
+    else if (sortMode === 'nama-desc') visible.sort((a,b) => (b.dataset.nama||'').localeCompare(a.dataset.nama||''));
+
+    const grid = document.getElementById('katalog-grid');
+    const empty = document.getElementById('empty-state');
+
+    cards.forEach(c => { c.style.display = 'none'; });
+    visible.forEach(c => {
+      c.style.display = 'flex';
+      c.style.flexDirection = 'column';
+      grid.appendChild(c); // reorder for sort
+    });
+
+    empty.classList.toggle('show', visible.length === 0);
+    document.getElementById('item-count').textContent = visible.length + ' item';
+  }
+
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      activeFilter = this.dataset.filter;
+      applyAll();
+    });
+  });
+
+  // Search
+  document.getElementById('search-input').addEventListener('input', function() {
+    searchQuery = this.value;
+    applyAll();
+  });
+
+  // Sort
+  document.getElementById('sort-select').addEventListener('change', function() {
+    sortMode = this.value;
+    applyAll();
+  });
+
+  function resetFilter() {
+    activeFilter = 'all';
+    searchQuery = '';
+    sortMode = 'default';
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+    document.getElementById('search-input').value = '';
+    document.getElementById('sort-select').value = 'default';
+    applyAll();
+  }
+
+  // Init count
+  document.getElementById('item-count').textContent = getAllCards().length + ' item';
+
+  // ── Lightbox
+  function openDetail(btn) {
+    const card = btn.closest('.katalog-card');
+    const nama = card.dataset.nama || '';
+    const harga = card.dataset.harga || '0';
+    const kat = card.dataset.kategori || '';
+    const desc = card.querySelector('p')?.textContent || '';
+    const imgEl = card.querySelector('img');
+
+    const lbImgWrap = document.getElementById('lb-img-wrap');
+    lbImgWrap.innerHTML = imgEl
+      ? `<img src="${imgEl.src}" alt="${nama}" class="w-full h-full object-cover"/>`
+      : `<svg class="w-16 h-16 text-slate/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`;
+
+    document.getElementById('lb-title').textContent = nama;
+    document.getElementById('lb-desc').textContent = desc;
+    document.getElementById('lb-badge').textContent = kat.toUpperCase();
+    document.getElementById('lb-harga').textContent = 'Rp ' + parseInt(harga).toLocaleString('id-ID');
+
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox(e) {
+    if (!e || e.target === document.getElementById('lightbox') || e.target.tagName === 'BUTTON') {
+      document.getElementById('lightbox').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  }
+
+  document.addEventListener('keydown', e => { if(e.key==='Escape') closeLightbox({target:document.getElementById('lightbox')}); });
+</script>
+
+<!-- ═══ DYNAMIC LOAD FROM ADMIN ═══ -->
+<script>
+(function(){
+  const KEY = 'izokabe_katalog';
+  const grid = document.getElementById('katalog-grid');
+  const countEl = document.getElementById('item-count');
+  if (!grid) return;
+
+  let items = null;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) items = JSON.parse(raw);
+  } catch(e){}
+
+  if (!Array.isArray(items) || !items.length) return; // pakai default HTML
+
+  const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmt = n => 'Rp ' + (parseInt(n)||0).toLocaleString('id-ID');
+  const badgeCls = k => k === 'material' ? 'badge-material' : k === 'alat' ? 'badge-alat' : 'badge-lainnya';
+  const badgeLbl = k => (k||'lainnya').charAt(0).toUpperCase() + (k||'lainnya').slice(1);
+
+  grid.innerHTML = items.map(it => {
+    const imgHtml = it.foto
+      ? `<img src="${it.foto}" alt="${esc(it.nama)}" class="card-img w-full h-full object-cover" onerror="this.style.display='none'"/>`
+      : `<div class="card-img w-full h-full flex items-center justify-center text-slate/20">
+           <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+         </div>`;
+    return `
+      <div class="katalog-card reveal visible group bg-ink-800 border border-white/8 flex flex-col"
+           data-kategori="${esc(it.kategori||'lainnya')}"
+           data-nama="${esc(it.nama)}"
+           data-harga="${parseInt(it.harga)||0}">
+        <div class="relative overflow-hidden aspect-square bg-ink-700">
+          ${imgHtml}
+          <div class="card-overlay absolute inset-0 bg-gold/8 flex items-center justify-center">
+            <button onclick="openDetail(this)" class="bg-ink-900/80 border border-gold text-gold font-mono text-xs tracking-widest uppercase px-5 py-2 hover:bg-gold hover:text-ink transition-all">Lihat Detail</button>
+          </div>
+          <div class="absolute top-3 left-3">
+            <span class="${badgeCls(it.kategori)} font-mono text-xs px-2 py-1 tracking-widest uppercase">${badgeLbl(it.kategori)}</span>
+          </div>
+        </div>
+        <div class="p-5 flex flex-col flex-1">
+          <h3 class="font-display text-base font-bold text-cream mb-1">${esc(it.nama)}</h3>
+          <p class="font-body text-xs text-slate-light leading-relaxed flex-1 mb-4">${esc(it.deskripsi||'')}</p>
+          <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+            <span class="font-mono text-gold font-bold">${fmt(it.harga)}</span>
+            <a href="Home.html#contact" class="font-mono text-xs text-slate border border-white/10 px-3 py-1.5 hover:border-gold hover:text-gold transition-all">Pesan</a>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Update counter
+  if (countEl) countEl.textContent = items.length + ' item';
+
+  // Re-attach cursor hover
+  const cur = document.getElementById('cursor');
+  grid.querySelectorAll('.katalog-card').forEach(el => {
+    el.addEventListener('mouseenter', () => { if(!cur) return; cur.style.width='20px'; cur.style.height='20px'; cur.style.background='transparent'; cur.style.border='1px solid #c9a84c'; });
+    el.addEventListener('mouseleave', () => { if(!cur) return; cur.style.width='12px'; cur.style.height='12px'; cur.style.background='#c9a84c'; cur.style.border='none'; });
+  });
+})();
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   KATALOG — render dari localStorage
+   + AUTO-MIGRATE dari kartu statis saat pertama kali dibuka
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  const KEY = 'izokabe_katalog';
+  const grid = document.getElementById('katalog-grid');
+  const countEl = document.getElementById('item-count');
+  if (!grid) return;
+
+  const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmt = n => 'Rp ' + (parseInt(n)||0).toLocaleString('id-ID');
+  const uid = () => 'k_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  const badgeCls = k => k === 'material' ? 'badge-material' : k === 'alat' ? 'badge-alat' : 'badge-lainnya';
+  const badgeLbl = k => (k||'lainnya').charAt(0).toUpperCase() + (k||'lainnya').slice(1);
+
+  /* ─── AUTO-MIGRATE dari kartu statis katalog ─── */
+  function migrateFromDOM() {
+    const cards = Array.from(grid.querySelectorAll('.katalog-card'));
+    if (!cards.length) return null;
+    const items = cards.map(card => {
+      const nameEl = card.querySelector('h3, h4, [class*="title"]');
+      const img = card.querySelector('img');
+      const descEl = card.querySelector('p');
+      const text = card.textContent || '';
+      const m = text.match(/Rp\s*([\d.,]+)/i);
+      const harga = m ? parseInt(m[1].replace(/[.,]/g,'')) : 0;
+      const kategori = (card.dataset.kategori || 'material').toLowerCase();
+      return {
+        id: uid(),
+        nama: nameEl ? nameEl.textContent.trim() : 'Barang',
+        kategori: ['material','alat','lainnya'].includes(kategori) ? kategori : 'lainnya',
+        harga: harga,
+        deskripsi: descEl ? descEl.textContent.trim() : '',
+        foto: img ? img.src : null,
+      };
+    }).filter(x => x.nama && x.nama !== 'Barang');
+
+    if (items.length) {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(items));
+        console.log(`[Izokabe] Migrasi ${items.length} barang dari katalog ke localStorage.`);
+      } catch(e){}
+    }
+    return items;
+  }
+
+  let items = null;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) items = JSON.parse(raw);
+  } catch(e){}
+  if (!Array.isArray(items) || !items.length) items = migrateFromDOM();
+  if (!Array.isArray(items) || !items.length) return;
+
+  /* ─── Render ─── */
+  grid.innerHTML = items.map(it => `
+    <div class="katalog-card reveal visible group bg-ink-800 border border-white/8 flex flex-col"
+         data-kategori="${esc(it.kategori||'lainnya')}"
+         data-nama="${esc(it.nama)}"
+         data-harga="${parseInt(it.harga)||0}">
+      <div class="relative overflow-hidden aspect-square bg-ink-700">
+        ${it.foto
+          ? `<img src="${it.foto}" alt="${esc(it.nama)}" class="card-img w-full h-full object-cover" onerror="this.style.display='none'"/>`
+          : `<div class="card-img w-full h-full flex items-center justify-center text-slate/20">
+               <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+             </div>`}
+        <div class="card-overlay absolute inset-0 bg-gold/8 flex items-center justify-center">
+          <button onclick="openDetail(this)" class="bg-ink-900/80 border border-gold text-gold font-mono text-xs tracking-widest uppercase px-5 py-2 hover:bg-gold hover:text-ink transition-all">Lihat Detail</button>
+        </div>
+        <div class="absolute top-3 left-3">
+          <span class="${badgeCls(it.kategori)} font-mono text-xs px-2 py-1 tracking-widest uppercase">${badgeLbl(it.kategori)}</span>
+        </div>
+      </div>
+      <div class="p-5 flex flex-col flex-1">
+        <h3 class="font-display text-base font-bold text-cream mb-1">${esc(it.nama)}</h3>
+        <p class="font-body text-xs text-slate-light leading-relaxed flex-1 mb-4">${esc(it.deskripsi||'')}</p>
+        <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+          <span class="font-mono text-gold font-bold">${fmt(it.harga)}</span>
+          <a href="Home.html#contact" class="font-mono text-xs text-slate border border-white/10 px-3 py-1.5 hover:border-gold hover:text-gold transition-all">Pesan</a>
+        </div>
+      </div>
+    </div>`).join('');
+
+  if (countEl) countEl.textContent = items.length + ' item';
+})();
+</script>
+
+</body>
+</html>
