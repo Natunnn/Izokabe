@@ -186,7 +186,6 @@ window.FB = { auth, db, productsCol, addDoc, updateDoc, deleteDoc, doc, onSnapsh
 onAuthStateChanged(auth, user => {
   window.dispatchEvent(new CustomEvent('fb-auth-ready', { detail: { user } }));
 });
-</script>uth, db, productsCol, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, signOut };
 </script>
 
 <!-- ═══ APP LOGIC ═══ -->
@@ -232,9 +231,10 @@ function showAdmin() { loadingScreen.classList.add('hidden'); loginScreen.classL
 function showLoading() { loginScreen.classList.add('hidden'); adminScreen.classList.add('hidden'); loadingScreen.classList.remove('hidden'); }
 
 /* ── Auth state ── */
-window.addEventListener('load', () => {
-// Ganti window.addEventListener('load', ...) dengan ini:
+// Tampilkan loading dulu
 showLoading();
+
+// Tunggu event dari Firebase module
 window.addEventListener('fb-auth-ready', (e) => {
   const user = e.detail.user;
   if (user) {
