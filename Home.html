@@ -1338,26 +1338,31 @@ document.addEventListener('keydown', function(e){
 </script>
 
 <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
-  import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
-  import firebaseConfig from './firebase-config.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const firebaseConfig = {
+  apiKey: "AIzaSyAIhnvqw9TLv-KFMDF_QydEaRtmDQnpmE8",
+  authDomain: "izokabe.firebaseapp.com",
+  projectId: "izokabe",
+  storageBucket: "izokabe.firebasestorage.app",
+  messagingSenderId: "352221770859",
+  appId: "1:352221770859:web:e874a9ae7fefd0e83b2d2e",
+  measurementId: "G-3R9E7MMP2C"
+};
 
-  // Gunakan onSnapshot untuk mendapatkan update data secara real-time
-  onSnapshot(collection(db, 'products'), (snapshot) => {
-    const items = [];
-    snapshot.forEach(doc => {
-      items.push({ id: doc.id, ...doc.data() });
-    });
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const productsCol = collection(db, 'products');
 
-    // Di sini, panggil fungsi untuk merender items ke halaman.
-    // Anda bisa memindahkan logika render dari skrip lokal ke sini.
-    // Contoh: renderKatalog(items); atau renderPortfolioBarang(items);
-    console.log('Data terbaru dari Firestore:', items);
-    // renderItems(items); // <-- Panggil fungsi render Anda di sini
-  });
+window.FB = { auth, db, productsCol, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, signOut };
+
+// Langsung panggil onAuthStateChanged di sini, bukan di script terpisah
+onAuthStateChanged(auth, user => {
+  window.dispatchEvent(new CustomEvent('fb-auth-ready', { detail: { user } }));
+});
 </script>
 
 <script type="module">
