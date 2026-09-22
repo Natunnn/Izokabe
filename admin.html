@@ -170,6 +170,15 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const productsCol = collection(db, 'products');
+const firebaseConfig = {
+  apiKey: "AIzaSyAIhnvqw9TLv-KFMDF_QydEaRtmDQnpmE8",
+  authDomain: "izokabe.firebaseapp.com",
+  projectId: "izokabe",
+  storageBucket: "izokabe.firebasestorage.app",
+  messagingSenderId: "352221770859",
+  appId: "1:352221770859:web:e874a9ae7fefd0e83b2d2e",
+  measurementId: "G-3R9E7MMP2C"
+};
 
 /* ── Expose ke global ── */
 window.FB = { auth, db, productsCol, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, signOut };
