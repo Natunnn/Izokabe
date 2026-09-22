@@ -229,20 +229,17 @@ function showLoading() { loginScreen.classList.add('hidden'); adminScreen.classL
 /* ── Auth state ── */
 window.addEventListener('load', () => {
   showLoading();
-  // Tunggu modul Firebase selesai di-load
-  const check = setInterval(() => {
-    if (window.FB && window.FB.auth) {
-      clearInterval(check);
-      const { auth, onAuthStateChanged } = window.FB;
-      // Re-import onAuthStateChanged via module (ternary workaround)
-      import('https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js').then(({ onAuthStateChanged }) => {
-        onAuthStateChanged(auth, user => {
+  import('https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js').then(({ onAuthStateChanged }) => {
+    const waitFB = setInterval(() => {
+      if (window.FB && window.FB.auth) {
+        clearInterval(waitFB);
+        onAuthStateChanged(window.FB.auth, user => {
           if (user) { userEmailEl.textContent = user.email; startAdmin(); }
           else { showLogin(); }
         });
-      });
-    }
-  }, 50);
+      }
+    }, 50);
+  });
 });
 
 /* ── Login ── */
