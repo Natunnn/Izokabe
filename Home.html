@@ -873,7 +873,7 @@ onSnapshot(collection(db, 'products'), snapshot => {
   snapshot.forEach(d => items.push({ id: d.id, ...d.data() }));
   items.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
-  const grid = document.getElementById('katalog-grid');
+  const track = document.getElementById('barang-track');
   const countEl = document.getElementById('item-count');
   if (!grid) return;
   if (!items.length) return;
