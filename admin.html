@@ -235,9 +235,16 @@ function showLoading() { loginScreen.classList.add('hidden'); adminScreen.classL
 showLoading();
 
 // Tunggu event dari Firebase module
-window.addEventListener('fb-auth-ready', (e) => {
+showLoading();
+window.addEventListener('fb-auth-ready', async (e) => {
   const user = e.detail.user;
   if (user) {
+    if (!sessionStorage.getItem('admin_active')) {
+      // Tab baru dibuka tanpa sesi aktif — paksa logout
+      await window.FB.signOut(window.FB.auth);
+      showLogin();
+      return;
+    }
     userEmailEl.textContent = user.email;
     startAdmin();
   } else {
@@ -278,10 +285,21 @@ logoutBtn.addEventListener('click', async () => {
   if (!confirm('Logout dari admin?')) return;
   if (unsubSnapshot) unsubSnapshot();
   await window.FB.signOut(window.FB.auth);
+  logoutBtn.addEventListener('click', async () => {
+  if (!confirm('Logout dari admin?')) return;
+  if (unsubSnapshot) unsubSnapshot();
+  sessionStorage.removeItem('admin_active'); // ← tambahkan ini
+  await window.FB.signOut(window.FB.auth);
+  location.reload();
+});
   location.reload();
 });
 
 /* ── Start admin: snapshot real-time ── */
+function startAdmin() {
+  sessionStorage.setItem('admin_active', '1'); // ← tambahkan ini
+  showAdmin()};
+
 function startAdmin() {
   showAdmin();
   if (unsubSnapshot) unsubSnapshot();
