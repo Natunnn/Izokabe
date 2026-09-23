@@ -496,11 +496,7 @@ $('preview').querySelector('[data-clear-preview]').addEventListener('click', () 
 $('search').addEventListener('input', e => { searchQ = e.target.value; render(); });
 
 // Auto logout saat tab/browser ditutup
-window.addEventListener('beforeunload', async () => {
-  if (window.FB && window.FB.auth && window.FB.auth.currentUser) {
-    await window.FB.signOut(window.FB.auth);
-  }
-});
+
 
 </script>
 </body>
