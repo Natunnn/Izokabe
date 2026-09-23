@@ -231,16 +231,11 @@ function showAdmin() { loadingScreen.classList.add('hidden'); loginScreen.classL
 function showLoading() { loginScreen.classList.add('hidden'); adminScreen.classList.add('hidden'); loadingScreen.classList.remove('hidden'); }
 
 /* ── Auth state ── */
-// Tampilkan loading dulu
-showLoading();
-
-// Tunggu event dari Firebase module
 showLoading();
 window.addEventListener('fb-auth-ready', async (e) => {
   const user = e.detail.user;
   if (user) {
     if (!sessionStorage.getItem('admin_active')) {
-      // Tab baru dibuka tanpa sesi aktif — paksa logout
       await window.FB.signOut(window.FB.auth);
       showLogin();
       return;
@@ -264,13 +259,14 @@ loginForm.addEventListener('submit', async e => {
   const password = fd.get('password');
 
   try {
+    sessionStorage.setItem('admin_active', '1');
     const mod = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js');
     await mod.signInWithEmailAndPassword(window.FB.auth, email, password);
-    // onAuthStateChanged akan trigger startAdmin()
   } catch (err) {
+    sessionStorage.removeItem('admin_active');
     console.error(err);
     const msg = err.code === 'auth/invalid-credential' ? 'Email atau password salah'
-              : err.code === 'auth/user-not-found'   ? 'User tidak ditemukan'
+              : err.code === 'auth/user-not-found'     ? 'User tidak ditemukan'
               : err.message || 'Login gagal';
     loginError.textContent = msg;
     loginError.classList.remove('hidden');
@@ -284,23 +280,14 @@ loginForm.addEventListener('submit', async e => {
 logoutBtn.addEventListener('click', async () => {
   if (!confirm('Logout dari admin?')) return;
   if (unsubSnapshot) unsubSnapshot();
+  sessionStorage.removeItem('admin_active');
   await window.FB.signOut(window.FB.auth);
-  logoutBtn.addEventListener('click', async () => {
-  if (!confirm('Logout dari admin?')) return;
-  if (unsubSnapshot) unsubSnapshot();
-  sessionStorage.removeItem('admin_active'); // ← tambahkan ini
-  await window.FB.signOut(window.FB.auth);
-  location.reload();
-});
   location.reload();
 });
 
 /* ── Start admin: snapshot real-time ── */
 function startAdmin() {
-  sessionStorage.setItem('admin_active', '1'); // ← tambahkan ini
-  showAdmin()};
-
-function startAdmin() {
+  sessionStorage.setItem('admin_active', '1');
   showAdmin();
   if (unsubSnapshot) unsubSnapshot();
 
@@ -495,12 +482,7 @@ $('preview').querySelector('[data-clear-preview]').addEventListener('click', () 
 /* ── Search ── */
 $('search').addEventListener('input', e => { searchQ = e.target.value; render(); });
 
-// Auto logout saat tab/browser ditutup
-window.addEventListener('beforeunload', async () => {
-  if (window.FB && window.FB.auth && window.FB.auth.currentUser) {
-    await window.FB.signOut(window.FB.auth);
-  }
-});
+
 
 </script>
 </body>
