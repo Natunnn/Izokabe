@@ -108,6 +108,20 @@ tailwind.config = { theme: { extend: {
               <input required name="harga" type="number" min="0" placeholder="0" class="w-full px-3 py-2.5 text-sm"/>
             </div>
           </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Stok</label>
+              <input name="stok" type="number" min="0" placeholder="0" class="w-full px-3 py-2.5 text-sm"/>
+            </div>
+            <div>
+              <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Status</label>
+              <select name="status" class="w-full px-3 py-2.5 text-sm">
+                <option value="tersedia">Tersedia</option>
+                <option value="habis">Habis</option>
+                <option value="preorder">Pre-Order</option>
+              </select>
+            </div>
+          </div>
           <div>
             <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Deskripsi</label>
             <textarea name="deskripsi" rows="3" placeholder="Deskripsi singkat..." class="w-full px-3 py-2.5 text-sm resize-none"></textarea>
@@ -319,9 +333,12 @@ function render() {
           : `<div class="w-full h-full flex items-center justify-center text-slate/30 text-[10px] font-mono">N/A</div>`}
       </div>
       <div class="flex-1 min-w-0">
-        <span class="inline-block font-mono text-[9px] tracking-widest uppercase border px-2 py-[2px] mb-1 ${badgeCls(it.kategori)}">${esc(it.kategori)}</span>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="inline-block font-mono text-[9px] tracking-widest uppercase border px-2 py-[2px] ${badgeCls(it.kategori)}">${esc(it.kategori)}</span>
+          <span class="inline-block font-mono text-[9px] tracking-widest uppercase border px-2 py-[2px] ${it.status === 'habis' ? 'border-red-500/40 text-red-400' : it.status === 'preorder' ? 'border-yellow-500/40 text-yellow-400' : 'border-green-500/40 text-green-400'}">${esc(it.status||'tersedia')}</span>
+        </div>
         <h3 class="font-display font-bold text-sm truncate">${esc(it.nama)}</h3>
-        <p class="font-mono text-[11px] text-gold">${fmtRp(it.harga)}</p>
+        <p class="font-mono text-[11px] text-gold">${fmtRp(it.harga)} <span class="text-slate ml-2">Stok: ${parseInt(it.stok)||0}</span></p>
         <p class="font-body text-[11px] text-slate truncate">${esc(it.deskripsi||'—')}</p>
       </div>
       <div class="flex flex-col gap-1 shrink-0">
@@ -342,6 +359,8 @@ $('form-barang').addEventListener('submit', async e => {
   const nama = (fd.get('nama')||'').trim();
   const kategori = fd.get('kategori');
   const harga = parseInt(fd.get('harga')) || 0;
+  const stok = parseInt(fd.get('stok')) || 0;
+  const status = fd.get('status') || 'tersedia';
   const deskripsi = (fd.get('deskripsi')||'').trim();
   const fotoUrl = (fd.get('foto_url')||'').trim();
 
@@ -350,7 +369,7 @@ $('form-barang').addEventListener('submit', async e => {
   let finalFoto = pendingFoto;
   if (!finalFoto && fotoUrl) finalFoto = fotoUrl;
 
-  const payload = { nama, kategori, harga, deskripsi };
+  const payload = { nama, kategori, harga, stok, status, deskripsi };
   if (finalFoto) payload.foto = finalFoto;
 
   const { addDoc, updateDoc, doc, productsCol, serverTimestamp } = window.FB;
@@ -390,6 +409,8 @@ function editItem(id) {
   f.kategori.value = it.kategori;
   f.harga.value = it.harga;
   f.deskripsi.value = it.deskripsi || '';
+  f.stok.value = it.stok || 0;
+  f.status.value = it.status || 'tersedia';
   f.foto_url.value = '';
   pendingFoto = it.foto || null;
   showPreview(it.foto || null);
