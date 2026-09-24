@@ -469,7 +469,6 @@
 
   document.addEventListener('keydown', e => { if(e.key==='Escape') closeLightbox({target:document.getElementById('lightbox')}); });
 </script>
-</script>
 
 
 
@@ -504,6 +503,41 @@ onSnapshot(collection(db, 'products'), snapshot => {
   const countEl = document.getElementById('item-count');
   if (!grid) return;
   if (!items.length) return;
+
+  grid.innerHTML = items.map(it => `
+    <div class="katalog-card reveal visible group bg-ink-800 border border-white/8 flex flex-col ${it.status === 'habis' ? 'opacity-60' : ''}"
+         data-kategori="${esc(it.kategori||'lainnya')}"
+         data-nama="${esc(it.nama)}"
+         data-harga="${parseInt(it.harga)||0}">
+      <div class="relative overflow-hidden aspect-square bg-ink-700">
+        ${it.foto
+          ? `<img src="${esc(it.foto)}" alt="${esc(it.nama)}" class="card-img w-full h-full object-cover" onerror="this.style.display='none'"/>`
+          : `<div class="card-img w-full h-full flex items-center justify-center text-slate/20">
+               <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+             </div>`}
+        ${it.status === 'habis'
+          ? `<div class="absolute inset-0 bg-ink/40 flex items-center justify-center"><span class="font-mono text-xs text-red-400 border border-red-500/50 px-3 py-1 bg-ink-900/80 tracking-widest uppercase">Stok Habis</span></div>`
+          : `<div class="card-overlay absolute inset-0 bg-gold/8 flex items-center justify-center">
+               <button onclick="openDetail(this)" class="bg-ink-900/80 border border-gold text-gold font-mono text-xs tracking-widest uppercase px-5 py-2 hover:bg-gold hover:text-ink transition-all">Lihat Detail</button>
+             </div>`}
+        <div class="absolute top-3 left-3 flex gap-1">
+          <span class="${badgeCls(it.kategori)} font-mono text-xs px-2 py-1 tracking-widest uppercase">${badgeLbl(it.kategori)}</span>
+          ${it.status === 'preorder' ? '<span class="font-mono text-[10px] border border-yellow-500/50 text-yellow-400 px-2 py-1 tracking-widest uppercase">PO</span>' : ''}
+        </div>
+      </div>
+      <div class="p-5 flex flex-col flex-1">
+        <h3 class="font-display text-base font-bold text-cream mb-1">${esc(it.nama)}</h3>
+        <p class="font-body text-xs text-slate-light leading-relaxed flex-1 mb-3">${esc(it.deskripsi||'')}</p>
+        ${(parseInt(it.stok)||0) > 0 ? `<p class="font-mono text-[10px] text-slate mb-3">Stok tersedia: <span class="text-cream">${parseInt(it.stok)}</span></p>` : ''}
+        <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+          <span class="font-mono text-gold font-bold">${fmt(it.harga)}</span>
+          <a href="Home.html#contact" class="font-mono text-xs ${it.status === 'habis' ? 'text-slate/40 border-white/5 pointer-events-none' : 'text-slate border-white/10 hover:border-gold hover:text-gold'} border px-3 py-1.5 transition-all">
+            ${it.status === 'habis' ? 'Habis' : it.status === 'preorder' ? 'Pre-Order' : 'Pesan'}
+          </a>
+        </div>
+      </div>
+    </div>`).join('');
+
   if (countEl) countEl.textContent = items.length + ' item';
 }, err => console.warn('[katalog] Firestore error:', err.message));
 </script>
@@ -558,183 +592,6 @@ onSnapshot(collection(db, 'products'), snapshot => {
     </div>
   </div>
 </div>
-
-<!-- ═══ MODAL PEMESANAN ═══ -->
-<div id="order-modal" class="fixed inset-0 bg-ink-900/95 backdrop-blur-sm z-[9001] hidden items-center justify-center p-4">
-  <div class="bg-ink-800 border border-white/10 w-full max-w-md relative">
-    <div class="p-6 border-b border-white/8 flex items-center justify-between">
-      <h3 class="font-display text-xl font-bold text-cream">Buat Pesanan</h3>
-      <button onclick="closeOrderModal()" class="text-slate hover:text-gold transition-colors text-lg font-mono">✕</button>
-    </div>
-    <div class="p-6 space-y-4">
-      <div id="order-product-info" class="flex gap-3 p-3 bg-ink-700 border border-white/8">
-        <div id="order-img" class="w-14 h-14 shrink-0 bg-ink-600 overflow-hidden"></div>
-        <div>
-          <p id="order-nama" class="font-display font-bold text-cream text-sm"></p>
-          <p id="order-harga" class="font-mono text-gold text-xs mt-0.5"></p>
-          <p id="order-stok-info" class="font-mono text-slate text-xs mt-0.5"></p>
-        </div>
-      </div>
-      <div>
-        <label class="font-mono text-xs text-slate tracking-widest uppercase block mb-2">Nama Lengkap *</label>
-        <input id="order-nama-input" type="text" placeholder="Nama kamu" class="w-full bg-ink-700 border border-white/10 text-cream px-4 py-2.5 text-sm font-body focus:outline-none focus:border-gold/60 transition-colors placeholder-slate/40"/>
-      </div>
-      <div>
-        <label class="font-mono text-xs text-slate tracking-widest uppercase block mb-2">No. WhatsApp *</label>
-        <input id="order-wa" type="tel" placeholder="08xxxxxxxxxx" class="w-full bg-ink-700 border border-white/10 text-cream px-4 py-2.5 text-sm font-body focus:outline-none focus:border-gold/60 transition-colors placeholder-slate/40"/>
-      </div>
-      <div>
-        <label class="font-mono text-xs text-slate tracking-widest uppercase block mb-2">Jumlah *</label>
-        <div class="flex items-center gap-3">
-          <button onclick="changeQty(-1)" class="w-9 h-9 border border-white/10 text-cream hover:border-gold hover:text-gold transition-all font-mono text-lg flex items-center justify-center">−</button>
-          <input id="order-qty" type="number" value="1" min="1" class="flex-1 bg-ink-700 border border-white/10 text-cream px-4 py-2 text-sm font-body text-center focus:outline-none focus:border-gold/60 transition-colors"/>
-          <button onclick="changeQty(1)" class="w-9 h-9 border border-white/10 text-cream hover:border-gold hover:text-gold transition-all font-mono text-lg flex items-center justify-center">+</button>
-        </div>
-      </div>
-      <div>
-        <label class="font-mono text-xs text-slate tracking-widest uppercase block mb-2">Catatan (opsional)</label>
-        <textarea id="order-catatan" rows="2" placeholder="Ukuran, warna, atau catatan lain..." class="w-full bg-ink-700 border border-white/10 text-cream px-4 py-2.5 text-sm font-body focus:outline-none focus:border-gold/60 transition-colors placeholder-slate/40 resize-none"></textarea>
-      </div>
-      <div class="flex items-center justify-between py-3 border-t border-white/8">
-        <span class="font-mono text-xs text-slate tracking-widest uppercase">Total</span>
-        <span id="order-total" class="font-mono text-gold font-bold text-base"></span>
-      </div>
-      <p id="order-error" class="font-mono text-xs text-red-400 hidden"></p>
-      <button onclick="submitOrder()" id="order-submit-btn" class="btn-primary w-full border border-gold text-gold py-3 font-mono text-sm tracking-widest uppercase transition-all">
-        <span>Konfirmasi Pesanan</span>
-      </button>
-    </div>
-  </div>
-</div>
-
-<div id="order-success" class="fixed inset-0 bg-ink-900/95 backdrop-blur-sm z-[9002] hidden items-center justify-center p-4">
-  <div class="bg-ink-800 border border-gold/30 w-full max-w-sm p-8 text-center">
-    <div class="w-14 h-14 border border-gold/40 flex items-center justify-center mx-auto mb-4">
-      <svg class="w-7 h-7 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
-    </div>
-    <h3 class="font-display text-2xl font-bold text-cream mb-2">Pesanan Diterima!</h3>
-    <p class="font-body text-sm text-slate-light mb-6" id="success-msg"></p>
-    <button onclick="closeSuccessModal()" class="btn-primary border border-gold text-gold px-8 py-3 font-mono text-xs tracking-widest uppercase w-full"><span>Tutup</span></button>
-  </div>
-</div>
-
-<script type="module">
-import { getApps, initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
-import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAIhnvqw9TLv-KFMDF_QydEaRtmDQnpmE8",
-  authDomain: "izokabe.firebaseapp.com",
-  projectId: "izokabe",
-  storageBucket: "izokabe.firebasestorage.app",
-  messagingSenderId: "352221770859",
-  appId: "1:352221770859:web:e874a9ae7fefd0e83b2d2e"
-};
-
-const app2 = getApps().find(a => a.name === 'order') || initializeApp(firebaseConfig, 'order');
-const db2 = getFirestore(app2);
-
-let currentOrder = {};
-
-window.openOrderModal = function(id, nama, harga, stok, foto) {
-  currentOrder = { id, nama, harga, stok, foto };
-  document.getElementById('order-nama').textContent = nama;
-  document.getElementById('order-harga').textContent = 'Rp ' + harga.toLocaleString('id-ID');
-  document.getElementById('order-stok-info').textContent = stok > 0 ? 'Stok tersedia: ' + stok : '';
-  const imgEl = document.getElementById('order-img');
-  imgEl.innerHTML = foto ? `<img src="${foto}" class="w-full h-full object-cover" onerror="this.style.display='none'"/>` : `<div class="w-full h-full flex items-center justify-center text-slate/30 text-[10px] font-mono">N/A</div>`;
-  document.getElementById('order-qty').value = 1;
-  document.getElementById('order-qty').max = stok;
-  document.getElementById('order-nama-input').value = '';
-  document.getElementById('order-wa').value = '';
-  document.getElementById('order-catatan').value = '';
-  document.getElementById('order-error').classList.add('hidden');
-  updateTotal();
-  const modal = document.getElementById('order-modal');
-  modal.classList.remove('hidden');
-  modal.classList.add('flex');
-};
-
-window.closeOrderModal = function() {
-  const m = document.getElementById('order-modal');
-  m.classList.add('hidden'); m.classList.remove('flex');
-};
-
-window.closeSuccessModal = function() {
-  const m = document.getElementById('order-success');
-  m.classList.add('hidden'); m.classList.remove('flex');
-};
-
-window.changeQty = function(delta) {
-  const input = document.getElementById('order-qty');
-  const max = currentOrder.stok || 999;
-  let val = Math.max(1, Math.min(parseInt(input.value) + delta, max));
-  input.value = val;
-  updateTotal();
-};
-
-document.getElementById('order-qty').addEventListener('input', updateTotal);
-
-function updateTotal() {
-  const qty = parseInt(document.getElementById('order-qty').value) || 1;
-  document.getElementById('order-total').textContent = 'Rp ' + (qty * (currentOrder.harga || 0)).toLocaleString('id-ID');
-}
-
-window.submitOrder = async function() {
-  const nama = document.getElementById('order-nama-input').value.trim();
-  const wa = document.getElementById('order-wa').value.trim();
-  const qty = parseInt(document.getElementById('order-qty').value) || 1;
-  const catatan = document.getElementById('order-catatan').value.trim();
-  const errEl = document.getElementById('order-error');
-  const btn = document.getElementById('order-submit-btn');
-
-  errEl.classList.add('hidden');
-  if (!nama) { errEl.textContent = 'Nama lengkap wajib diisi'; errEl.classList.remove('hidden'); return; }
-  if (!wa) { errEl.textContent = 'No. WhatsApp wajib diisi'; errEl.classList.remove('hidden'); return; }
-  if (qty > currentOrder.stok) { errEl.textContent = 'Jumlah melebihi stok (' + currentOrder.stok + ')'; errEl.classList.remove('hidden'); return; }
-
-  btn.disabled = true;
-  btn.querySelector('span').textContent = 'Memproses...';
-
-  try {
-    const prodRef = doc(db2, 'products', currentOrder.id);
-    const prodSnap = await getDoc(prodRef);
-    if (!prodSnap.exists()) throw new Error('Produk tidak ditemukan');
-    const stokTerbaru = parseInt(prodSnap.data().stok) || 0;
-    if (qty > stokTerbaru) {
-      errEl.textContent = 'Stok tidak mencukupi. Sisa: ' + stokTerbaru;
-      errEl.classList.remove('hidden');
-      return;
-    }
-
-    await addDoc(collection(db2, 'orders'), {
-      productId: currentOrder.id, namaProduk: currentOrder.nama,
-      harga: currentOrder.harga, qty, total: qty * currentOrder.harga,
-      namaPembeli: nama, whatsapp: wa, catatan,
-      status: 'pending', createdAt: serverTimestamp()
-    });
-
-    const newStok = stokTerbaru - qty;
-    await updateDoc(prodRef, {
-      stok: newStok,
-      status: newStok <= 0 ? 'habis' : prodSnap.data().status,
-      updatedAt: serverTimestamp()
-    });
-
-    closeOrderModal();
-    document.getElementById('success-msg').textContent = `Pesanan ${qty}x ${currentOrder.nama} berhasil! Kami akan menghubungi kamu di WhatsApp ${wa} segera.`;
-    const sm = document.getElementById('order-success');
-    sm.classList.remove('hidden'); sm.classList.add('flex');
-
-  } catch (err) {
-    errEl.textContent = 'Gagal: ' + err.message;
-    errEl.classList.remove('hidden');
-  } finally {
-    btn.disabled = false;
-    btn.querySelector('span').textContent = 'Konfirmasi Pesanan';
-  }
-};
-</script>
 
 </body>
 </html>
