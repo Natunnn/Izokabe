@@ -470,6 +470,23 @@
   document.addEventListener('keydown', e => { if(e.key==='Escape') closeLightbox({target:document.getElementById('lightbox')}); });
 </script>
 
+<!-- ═══ DYNAMIC LOAD FROM ADMIN ═══ -->
+
+
+
+  /* ─── Render ─── */
+ 
+<div class="katalog-card reveal visible group bg-ink-800 border border-white/8 flex flex-col ${it.status === 'habis' ? 'opacity-60' : ''}"
+         data-id="${esc(it.id)}"
+         data-kategori="${esc(it.kategori||'lainnya')}"
+         data-nama="${esc(it.nama)}"
+         data-harga="${parseInt(it.harga)||0}"
+         data-stok="${parseInt(it.stok)||0}"
+         data-status="${esc(it.status||'tersedia')}">
+      <div class="relative overflow-hidden aspect-square bg-ink-700">
+      
+</script>
+
 
 
 
