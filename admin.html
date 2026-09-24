@@ -213,9 +213,8 @@ tailwind.config = { theme: { extend: {
 <!-- ═══ FIREBASE ═══ -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
-import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, runTransaction } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAIhnvqw9TLv-KFMDF_QydEaRtmDQnpmE8",
@@ -233,9 +232,12 @@ const auth = getAuth(app);
 const productsCol = collection(db, 'products');
 const pesananCol  = collection(db, 'orders');
 
-window.FB = { auth, db, productsCol, pesananCol, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, signOut, query, orderBy, runTransaction };
+window.FB = {
+  auth, db,
+  productsCol, pesananCol,
+  addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, signOut, query, orderBy, runTransaction,
+};
 
-// Langsung panggil onAuthStateChanged di sini, bukan di script terpisah
 onAuthStateChanged(auth, user => {
   window.dispatchEvent(new CustomEvent('fb-auth-ready', { detail: { user } }));
 });
