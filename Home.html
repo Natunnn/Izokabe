@@ -832,6 +832,69 @@
   <p class="font-mono text-xs text-slate/50 tracking-widest">IZOKABE — V1.0</p>
 </footer>
 
+<!-- ═══ MODAL PEMESANAN ═══ -->
+<div id="order-modal" class="fixed inset-0 bg-ink-900/95 backdrop-blur-sm z-[9001] hidden items-center justify-center p-4">
+  <div class="bg-ink-800 border border-white/10 w-full max-w-md relative">
+    <div class="p-6 border-b border-white/8 flex items-center justify-between">
+      <h3 class="font-display text-xl font-bold text-cream">Buat Pesanan</h3>
+      <button onclick="closeOrderModal()" class="text-slate hover:text-gold transition-colors text-lg font-mono">✕</button>
+    </div>
+    <div class="p-6 space-y-4">
+      <!-- Product info -->
+      <div id="order-product-info" class="flex gap-3 p-3 bg-ink-700 border border-white/8">
+        <div id="order-img" class="w-14 h-14 shrink-0 bg-ink-600 overflow-hidden"></div>
+        <div>
+          <p id="order-nama" class="font-display font-bold text-cream text-sm"></p>
+          <p id="order-harga" class="font-mono text-gold text-xs mt-0.5"></p>
+          <p id="order-stok-info" class="font-mono text-slate text-xs mt-0.5"></p>
+        </div>
+      </div>
+      <!-- Form -->
+      <div>
+        <label class="font-mono text-xs text-slate tracking-widest uppercase block mb-2">Nama Lengkap *</label>
+        <input id="order-nama-input" type="text" placeholder="Nama kamu" class="w-full bg-ink-700 border border-white/10 text-cream px-4 py-2.5 text-sm font-body focus:outline-none focus:border-gold/60 transition-colors placeholder-slate/40"/>
+      </div>
+      <div>
+        <label class="font-mono text-xs text-slate tracking-widest uppercase block mb-2">No. WhatsApp *</label>
+        <input id="order-wa" type="tel" placeholder="08xxxxxxxxxx" class="w-full bg-ink-700 border border-white/10 text-cream px-4 py-2.5 text-sm font-body focus:outline-none focus:border-gold/60 transition-colors placeholder-slate/40"/>
+      </div>
+      <div>
+        <label class="font-mono text-xs text-slate tracking-widest uppercase block mb-2">Jumlah *</label>
+        <div class="flex items-center gap-3">
+          <button onclick="changeQty(-1)" class="w-9 h-9 border border-white/10 text-cream hover:border-gold hover:text-gold transition-all font-mono text-lg flex items-center justify-center">−</button>
+          <input id="order-qty" type="number" value="1" min="1" class="flex-1 bg-ink-700 border border-white/10 text-cream px-4 py-2 text-sm font-body text-center focus:outline-none focus:border-gold/60 transition-colors"/>
+          <button onclick="changeQty(1)" class="w-9 h-9 border border-white/10 text-cream hover:border-gold hover:text-gold transition-all font-mono text-lg flex items-center justify-center">+</button>
+        </div>
+      </div>
+      <div>
+        <label class="font-mono text-xs text-slate tracking-widest uppercase block mb-2">Catatan (opsional)</label>
+        <textarea id="order-catatan" rows="2" placeholder="Ukuran, warna, atau catatan lain..." class="w-full bg-ink-700 border border-white/10 text-cream px-4 py-2.5 text-sm font-body focus:outline-none focus:border-gold/60 transition-colors placeholder-slate/40 resize-none"></textarea>
+      </div>
+      <!-- Total -->
+      <div class="flex items-center justify-between py-3 border-t border-white/8">
+        <span class="font-mono text-xs text-slate tracking-widest uppercase">Total</span>
+        <span id="order-total" class="font-mono text-gold font-bold text-base"></span>
+      </div>
+      <p id="order-error" class="font-mono text-xs text-red-400 hidden"></p>
+      <button onclick="submitOrder()" id="order-submit-btn" class="btn-primary w-full border border-gold text-gold py-3 font-mono text-sm tracking-widest uppercase transition-all">
+        <span>Konfirmasi Pesanan</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ORDER SUCCESS MODAL ═══ -->
+<div id="order-success" class="fixed inset-0 bg-ink-900/95 backdrop-blur-sm z-[9002] hidden items-center justify-center p-4">
+  <div class="bg-ink-800 border border-gold/30 w-full max-w-sm p-8 text-center">
+    <div class="w-14 h-14 border border-gold/40 flex items-center justify-center mx-auto mb-4">
+      <svg class="w-7 h-7 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h3 class="font-display text-2xl font-bold text-cream mb-2">Pesanan Diterima!</h3>
+    <p class="font-body text-sm text-slate-light mb-6" id="success-msg"></p>
+    <button onclick="closeSuccessModal()" class="btn-primary border border-gold text-gold px-8 py-3 font-mono text-xs tracking-widest uppercase w-full"><span>Tutup</span></button>
+  </div>
+</div>
+
 <!-- ═══════════════════════════ LIGHTBOX ═══════════════════════════ -->
 <div id="lightbox" onclick="closeLightbox(event)">
   <button onclick="closeLightbox()" class="absolute top-6 right-8 text-cream/60 hover:text-gold text-2xl z-10">✕</button>
@@ -914,9 +977,9 @@ onSnapshot(collection(db, 'products'), snapshot => {
             <span class="font-mono text-gold font-bold text-sm">${fmt(it.harga)}</span>
             ${(parseInt(it.stok)||0) > 0 ? `<span class="font-mono text-[10px] text-slate ml-2">Stok: ${parseInt(it.stok)}</span>` : ''}
           </div>
-          <a href="#contact" class="font-mono text-[10px] ${it.status === 'habis' ? 'text-slate/40 border-white/5 pointer-events-none' : 'text-slate border-white/10 hover:border-gold hover:text-gold'} border px-3 py-1.5 transition-all uppercase tracking-widest">
+          <button onclick="${it.status !== 'habis' ? `openOrderModal('${esc(it.id||'')}', '${esc(it.nama)}', ${parseInt(it.harga)||0}, ${parseInt(it.stok)||0}, '${esc(it.foto||'')}')` : ''}" class="font-mono text-[10px] ${it.status === 'habis' ? 'text-slate/40 border-white/5 cursor-not-allowed' : 'text-slate border-white/10 hover:border-gold hover:text-gold cursor-pointer'} border px-3 py-1.5 transition-all uppercase tracking-widest" ${it.status === 'habis' ? 'disabled' : ''}>
             ${it.status === 'habis' ? 'Habis' : it.status === 'preorder' ? 'Pre-Order' : 'Pesan'}
-          </a>
+          </button>
         </div>
       </div>
     </div>`).join('');
@@ -984,6 +1047,147 @@ onSnapshot(collection(db, 'products'), snapshot => {
   setTimeout(reinitCarousel, 80);
 
 }, err => console.warn('[Home] Firestore error:', err.message));
+</script>
+
+<script type="module">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+import { getFirestore, collection, addDoc, doc, updateDoc, increment, serverTimestamp, getDoc } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAIhnvqw9TLv-KFMDF_QydEaRtmDQnpmE8",
+  authDomain: "izokabe.firebaseapp.com",
+  projectId: "izokabe",
+  storageBucket: "izokabe.firebasestorage.app",
+  messagingSenderId: "352221770859",
+  appId: "1:352221770859:web:e874a9ae7fefd0e83b2d2e"
+};
+
+const app2 = getApps().find(a => a.name === 'order') || (await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js')).initializeApp(firebaseConfig, 'order');
+const db2 = getFirestore(app2);
+
+let currentOrder = {};
+
+window.openOrderModal = function(id, nama, harga, stok, foto) {
+  currentOrder = { id, nama, harga, stok, foto };
+  document.getElementById('order-nama').textContent = nama;
+  document.getElementById('order-harga').textContent = 'Rp ' + harga.toLocaleString('id-ID');
+  document.getElementById('order-stok-info').textContent = stok > 0 ? 'Stok tersedia: ' + stok : '';
+  const imgEl = document.getElementById('order-img');
+  imgEl.innerHTML = foto
+    ? `<img src="${foto}" class="w-full h-full object-cover" onerror="this.style.display='none'"/>`
+    : `<div class="w-full h-full flex items-center justify-center text-slate/30 text-[10px] font-mono">N/A</div>`;
+  document.getElementById('order-qty').value = 1;
+  document.getElementById('order-qty').max = stok;
+  document.getElementById('order-nama-input').value = '';
+  document.getElementById('order-wa').value = '';
+  document.getElementById('order-catatan').value = '';
+  document.getElementById('order-error').classList.add('hidden');
+  updateTotal();
+  const modal = document.getElementById('order-modal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+};
+
+window.closeOrderModal = function() {
+  const modal = document.getElementById('order-modal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+};
+
+window.closeSuccessModal = function() {
+  const modal = document.getElementById('order-success');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+};
+
+window.changeQty = function(delta) {
+  const input = document.getElementById('order-qty');
+  const max = currentOrder.stok || 999;
+  let val = parseInt(input.value) + delta;
+  val = Math.max(1, Math.min(val, max));
+  input.value = val;
+  updateTotal();
+};
+
+document.getElementById('order-qty').addEventListener('input', updateTotal);
+
+function updateTotal() {
+  const qty = parseInt(document.getElementById('order-qty').value) || 1;
+  const total = qty * (currentOrder.harga || 0);
+  document.getElementById('order-total').textContent = 'Rp ' + total.toLocaleString('id-ID');
+}
+
+window.submitOrder = async function() {
+  const nama = document.getElementById('order-nama-input').value.trim();
+  const wa = document.getElementById('order-wa').value.trim();
+  const qty = parseInt(document.getElementById('order-qty').value) || 1;
+  const catatan = document.getElementById('order-catatan').value.trim();
+  const errEl = document.getElementById('order-error');
+  const btn = document.getElementById('order-submit-btn');
+
+  errEl.classList.add('hidden');
+
+  if (!nama) { errEl.textContent = 'Nama lengkap wajib diisi'; errEl.classList.remove('hidden'); return; }
+  if (!wa) { errEl.textContent = 'No. WhatsApp wajib diisi'; errEl.classList.remove('hidden'); return; }
+  if (qty < 1) { errEl.textContent = 'Jumlah minimal 1'; errEl.classList.remove('hidden'); return; }
+  if (qty > currentOrder.stok) { errEl.textContent = 'Jumlah melebihi stok tersedia (' + currentOrder.stok + ')'; errEl.classList.remove('hidden'); return; }
+
+  btn.disabled = true;
+  btn.querySelector('span').textContent = 'Memproses...';
+
+  try {
+    // Cek stok terbaru sebelum konfirmasi
+    const prodRef = doc(db2, 'products', currentOrder.id);
+    const prodSnap = await getDoc(prodRef);
+    if (!prodSnap.exists()) throw new Error('Produk tidak ditemukan');
+    const stokTerbaru = parseInt(prodSnap.data().stok) || 0;
+    if (qty > stokTerbaru) {
+      errEl.textContent = 'Stok tidak mencukupi. Sisa stok: ' + stokTerbaru;
+      errEl.classList.remove('hidden');
+      btn.disabled = false;
+      btn.querySelector('span').textContent = 'Konfirmasi Pesanan';
+      return;
+    }
+
+    // Simpan pesanan ke Firestore
+    await addDoc(collection(db2, 'orders'), {
+      productId: currentOrder.id,
+      namaProduk: currentOrder.nama,
+      harga: currentOrder.harga,
+      qty,
+      total: qty * currentOrder.harga,
+      namaPembeli: nama,
+      whatsapp: wa,
+      catatan,
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+
+    // Kurangi stok
+    const newStok = stokTerbaru - qty;
+    await updateDoc(prodRef, {
+      stok: newStok,
+      status: newStok <= 0 ? 'habis' : prodSnap.data().status === 'habis' ? 'tersedia' : prodSnap.data().status,
+      updatedAt: serverTimestamp()
+    });
+
+    // Tutup modal order, tampilkan sukses
+    closeOrderModal();
+    document.getElementById('success-msg').textContent =
+      `Pesanan ${qty}x ${currentOrder.nama} berhasil dibuat! Kami akan menghubungi kamu di WhatsApp ${wa} segera.`;
+    const successModal = document.getElementById('order-success');
+    successModal.classList.remove('hidden');
+    successModal.classList.add('flex');
+
+  } catch (err) {
+    console.error(err);
+    errEl.textContent = 'Gagal membuat pesanan: ' + err.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.querySelector('span').textContent = 'Konfirmasi Pesanan';
+  }
+};
 </script>
 
 <script>
@@ -1286,7 +1490,10 @@ onSnapshot(collection(db, 'products'), snapshot => {
         <p class="font-body text-xs text-slate-light leading-relaxed flex-1 mb-4">${esc(it.deskripsi||'')}</p>
         <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
           <span class="font-mono text-gold font-bold text-sm">${fmt(it.harga)}</span>
-          <a href="#contact" class="font-mono text-[10px] text-slate border border-white/10 px-3 py-1.5 hover:border-gold hover:text-gold transition-all uppercase tracking-widest">Pesan</a>
+          <button type="button" onclick="openOrderModal(this)"
+  class="font-mono text-xs text-slate border border-white/10 px-3 py-1.5 hover:border-gold hover:text-gold transition-all">
+  Pesan
+</button>
         </div>
       </div>
     </div>`).join('');

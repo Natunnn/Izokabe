@@ -176,7 +176,7 @@ tailwind.config = { theme: { extend: {
 <!-- ═══ FIREBASE ═══ -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
-import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -194,7 +194,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const productsCol = collection(db, 'products');
 
-window.FB = { auth, db, productsCol, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, signOut };
+window.FB = { auth, db, productsCol, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, signOut, query, orderBy };
 
 // Langsung panggil onAuthStateChanged di sini, bukan di script terpisah
 onAuthStateChanged(auth, user => {
