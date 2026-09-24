@@ -20,6 +20,12 @@ tailwind.config = { theme: { extend: {
 }}}
 </script>
 <style>
+  .tab-btn.active { color:#c9a84c; border-color:#c9a84c; }
+.tab-btn:not(.active) { color:#8a8f99; }
+.tab-btn:not(.active):hover { color:#f5f0e8; }
+.o-filter.active { background:#c9a84c; color:#0d0d0d; border-color:#c9a84c; }
+.o-filter:not(.active) { color:#8a8f99; }
+.o-filter:not(.active):hover { border-color:#c9a84c; color:#c9a84c; }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{background:#0d0d0d;color:#f5f0e8;font-family:'DM Sans',sans-serif;min-height:100vh}
   input,select,textarea{background:#1a1a1a;border:1px solid rgba(255,255,255,.1);color:#f5f0e8;transition:border-color .2s;border-radius:0}
@@ -77,93 +83,124 @@ tailwind.config = { theme: { extend: {
     </div>
   </nav>
 
-  <main class="max-w-7xl mx-auto px-6 md:px-12 pt-28 pb-20">
-    <div class="mb-8">
-      <p class="font-mono text-gold text-xs tracking-[0.3em] uppercase mb-2">— Dashboard Produk</p>
-      <h1 class="font-display text-3xl md:text-5xl font-black leading-tight">Kelola <em class="italic" style="background:linear-gradient(135deg,#e2c97e,#c9a84c,#a0822a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Barang</em></h1>
-      <p class="font-body text-slate-light mt-3 text-sm max-w-2xl">Data tersimpan di Firebase Firestore — otomatis tersinkron ke <b>katalog.html</b> dan <b>Home.html</b> di semua device.</p>
+<main class="max-w-7xl mx-auto px-6 md:px-12 pt-28 pb-20">
+  <div class="mb-8">
+    <p class="font-mono text-gold text-xs tracking-[0.3em] uppercase mb-2">— Dashboard</p>
+    <h1 class="font-display text-3xl md:text-5xl font-black leading-tight">Kelola <em class="italic" style="background:linear-gradient(135deg,#e2c97e,#c9a84c,#a0822a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Izokabe</em></h1>
+    <p class="font-body text-slate-light mt-3 text-sm max-w-2xl">Kelola barang dan pesanan yang masuk secara realtime dari Firestore.</p>
+  </div>
+
+  <!-- TABS -->
+  <div class="flex gap-0 mb-8 border-b border-white/10">
+    <button data-tab="barang" class="tab-btn active font-mono text-xs tracking-widest uppercase px-5 py-3 border-b-2 border-transparent transition-all">
+      📦 Barang
+    </button>
+    <button data-tab="pesanan" class="tab-btn relative font-mono text-xs tracking-widest uppercase px-5 py-3 border-b-2 border-transparent transition-all">
+      🔔 Pesanan
+      <span id="pesanan-badge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">0</span>
+    </button>
+  </div>
+
+  <!-- TAB: BARANG -->
+  <section id="tab-barang" class="tab-panel grid lg:grid-cols-[420px_1fr] gap-8">
+    <!-- FORM -->
+    <div class="bg-ink-800 border border-white/10 p-6 h-fit lg:sticky lg:top-24">
+      <h2 id="form-title" class="font-display text-xl font-bold mb-5">Tambah Barang Baru</h2>
+      <form id="form-barang" class="space-y-4">
+        <input type="hidden" name="id"/>
+        <div>
+          <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Nama Barang *</label>
+          <input required name="nama" type="text" placeholder="mis. Keramik Granit 60x60" class="w-full px-3 py-2.5 text-sm"/>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Kategori *</label>
+            <select required name="kategori" class="w-full px-3 py-2.5 text-sm">
+              <option value="material">Material</option>
+              <option value="alat">Alat</option>
+              <option value="lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Harga (Rp) *</label>
+            <input required name="harga" type="number" min="0" placeholder="0" class="w-full px-3 py-2.5 text-sm"/>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Stok</label>
+            <input name="stok" type="number" min="0" placeholder="0" class="w-full px-3 py-2.5 text-sm"/>
+          </div>
+          <div>
+            <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Status</label>
+            <select name="status" class="w-full px-3 py-2.5 text-sm">
+              <option value="tersedia">Tersedia</option>
+              <option value="habis">Habis</option>
+              <option value="preorder">Pre-Order</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Deskripsi</label>
+          <textarea name="deskripsi" rows="3" placeholder="Deskripsi singkat..." class="w-full px-3 py-2.5 text-sm resize-none"></textarea>
+        </div>
+        <div>
+          <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Foto Barang</label>
+          <div id="dropzone" class="dropzone border border-dashed border-white/15 p-4 text-center cursor-pointer hover:border-gold/50 transition-all">
+            <input id="file-input" type="file" accept="image/*" class="hidden"/>
+            <svg class="w-8 h-8 mx-auto text-slate/40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <p class="font-mono text-xs text-slate">Klik / drop gambar<br/><span class="text-slate/50">Auto-compress ≤800px</span></p>
+          </div>
+          <div class="mt-2">
+            <label class="block font-mono text-[10px] tracking-widest uppercase text-slate/60 mb-1">atau URL gambar:</label>
+            <input name="foto_url" type="url" placeholder="https://..." class="w-full px-3 py-2 text-xs"/>
+          </div>
+          <div id="preview" class="mt-3 hidden">
+            <div class="relative w-full aspect-square bg-ink-700 overflow-hidden border border-white/10">
+              <img class="w-full h-full object-cover"/>
+              <button type="button" data-clear-preview class="absolute top-2 right-2 bg-ink-900/90 border border-white/20 text-cream w-7 h-7 flex items-center justify-center hover:bg-red-500/80 hover:border-red-500 transition-all text-sm">✕</button>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="submit" id="submit-btn" class="btn-gold flex-1 border border-gold text-gold font-mono text-xs tracking-widest uppercase py-3">Simpan</button>
+          <button type="button" id="reset-form" class="border border-white/15 text-slate font-mono text-xs tracking-widest uppercase px-4 hover:border-white/40 hover:text-cream transition-all">Reset</button>
+        </div>
+      </form>
     </div>
 
-    <section class="grid lg:grid-cols-[420px_1fr] gap-8">
-      <!-- FORM -->
-      <div class="bg-ink-800 border border-white/10 p-6 h-fit lg:sticky lg:top-24">
-        <h2 id="form-title" class="font-display text-xl font-bold mb-5">Tambah Barang Baru</h2>
-        <form id="form-barang" class="space-y-4">
-          <input type="hidden" name="id"/>
-          <div>
-            <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Nama Barang *</label>
-            <input required name="nama" type="text" placeholder="mis. Keramik Granit 60x60" class="w-full px-3 py-2.5 text-sm"/>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Kategori *</label>
-              <select required name="kategori" class="w-full px-3 py-2.5 text-sm">
-                <option value="material">Material</option>
-                <option value="alat">Alat</option>
-                <option value="lainnya">Lainnya</option>
-              </select>
-            </div>
-            <div>
-              <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Harga (Rp) *</label>
-              <input required name="harga" type="number" min="0" placeholder="0" class="w-full px-3 py-2.5 text-sm"/>
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Stok</label>
-              <input name="stok" type="number" min="0" placeholder="0" class="w-full px-3 py-2.5 text-sm"/>
-            </div>
-            <div>
-              <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Status</label>
-              <select name="status" class="w-full px-3 py-2.5 text-sm">
-                <option value="tersedia">Tersedia</option>
-                <option value="habis">Habis</option>
-                <option value="preorder">Pre-Order</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Deskripsi</label>
-            <textarea name="deskripsi" rows="3" placeholder="Deskripsi singkat..." class="w-full px-3 py-2.5 text-sm resize-none"></textarea>
-          </div>
-          <div>
-            <label class="block font-mono text-[10px] tracking-widest uppercase text-slate mb-2">Foto Barang</label>
-            <div id="dropzone" class="dropzone border border-dashed border-white/15 p-4 text-center cursor-pointer hover:border-gold/50 transition-all">
-              <input id="file-input" type="file" accept="image/*" class="hidden"/>
-              <svg class="w-8 h-8 mx-auto text-slate/40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              <p class="font-mono text-xs text-slate">Klik / drop gambar<br/><span class="text-slate/50">Auto-compress ≤800px</span></p>
-            </div>
-            <div class="mt-2">
-              <label class="block font-mono text-[10px] tracking-widest uppercase text-slate/60 mb-1">atau URL gambar:</label>
-              <input name="foto_url" type="url" placeholder="https://..." class="w-full px-3 py-2 text-xs"/>
-            </div>
-            <div id="preview" class="mt-3 hidden">
-              <div class="relative w-full aspect-square bg-ink-700 overflow-hidden border border-white/10">
-                <img class="w-full h-full object-cover"/>
-                <button type="button" data-clear-preview class="absolute top-2 right-2 bg-ink-900/90 border border-white/20 text-cream w-7 h-7 flex items-center justify-center hover:bg-red-500/80 hover:border-red-500 transition-all text-sm">✕</button>
-              </div>
-            </div>
-          </div>
-          <div class="flex gap-2 pt-2">
-            <button type="submit" id="submit-btn" class="btn-gold flex-1 border border-gold text-gold font-mono text-xs tracking-widest uppercase py-3">Simpan</button>
-            <button type="button" id="reset-form" class="border border-white/15 text-slate font-mono text-xs tracking-widest uppercase px-4 hover:border-white/40 hover:text-cream transition-all">Reset</button>
-          </div>
-        </form>
+    <!-- LIST BARANG -->
+    <div>
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <h2 class="font-display text-xl font-bold">Daftar Barang <span class="font-mono text-sm text-slate" id="count">(0)</span></h2>
+        <input id="search" type="text" placeholder="Cari barang..." class="px-3 py-2 text-xs w-48"/>
       </div>
+      <div id="list" class="space-y-3"></div>
+      <div id="empty" class="hidden text-center py-16 border border-dashed border-white/10">
+        <p class="font-mono text-xs text-slate">Belum ada barang. Tambahkan dari form.</p>
+      </div>
+    </div>
+  </section>
 
-      <!-- LIST -->
-      <div>
-        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <h2 class="font-display text-xl font-bold">Daftar Barang <span class="font-mono text-sm text-slate" id="count">(0)</span></h2>
-          <input id="search" type="text" placeholder="Cari barang..." class="px-3 py-2 text-xs w-48"/>
-        </div>
-        <div id="list" class="space-y-3"></div>
-        <div id="empty" class="hidden text-center py-16 border border-dashed border-white/10">
-          <p class="font-mono text-xs text-slate">Belum ada barang. Tambahkan dari form.</p>
-        </div>
+  <!-- TAB: PESANAN -->
+  <section id="tab-pesanan" class="tab-panel hidden">
+    <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
+      <h2 class="font-display text-xl font-bold">
+        Daftar Pesanan <span class="font-mono text-sm text-slate" id="order-count">(0)</span>
+      </h2>
+      <div class="flex gap-2" id="order-filter">
+        <button data-ostat="pending"       class="o-filter active font-mono text-xs tracking-widest uppercase px-3 py-1.5 border border-white/15">Pending</button>
+        <button data-ostat="dikonfirmasi"  class="o-filter font-mono text-xs tracking-widest uppercase px-3 py-1.5 border border-white/15">Dikonfirmasi</button>
+        <button data-ostat="selesai"       class="o-filter font-mono text-xs tracking-widest uppercase px-3 py-1.5 border border-white/15">Selesai</button>
+        <button data-ostat="all"           class="o-filter font-mono text-xs tracking-widest uppercase px-3 py-1.5 border border-white/15">Semua</button>
       </div>
-    </section>
-  </main>
+    </div>
+    <div id="orders-list" class="space-y-3"></div>
+    <div id="orders-empty" class="hidden text-center py-16 border border-dashed border-white/10">
+      <p class="font-mono text-xs text-slate">Belum ada pesanan masuk.</p>
+    </div>
+  </section>
+</main>
 </div>
 
 <!-- TOAST -->
@@ -178,6 +215,7 @@ tailwind.config = { theme: { extend: {
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
 import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, runTransaction } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAIhnvqw9TLv-KFMDF_QydEaRtmDQnpmE8",
@@ -193,8 +231,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const productsCol = collection(db, 'products');
+const pesananCol  = collection(db, 'orders');
 
-window.FB = { auth, db, productsCol, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, signOut, query, orderBy };
+window.FB = { auth, db, productsCol, pesananCol, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, signOut, query, orderBy, runTransaction };
 
 // Langsung panggil onAuthStateChanged di sini, bukan di script terpisah
 onAuthStateChanged(auth, user => {
@@ -294,6 +333,7 @@ loginForm.addEventListener('submit', async e => {
 logoutBtn.addEventListener('click', async () => {
   if (!confirm('Logout dari admin?')) return;
   if (unsubSnapshot) unsubSnapshot();
+  if (unsubOrders) unsubOrders();
   sessionStorage.removeItem('admin_active');
   await window.FB.signOut(window.FB.auth);
   location.reload();
@@ -314,6 +354,7 @@ function startAdmin() {
     console.error('Firestore error:', err);
     showToast('Gagal memuat data: ' + err.message, true);
   });
+  startOrders();
 }
 
 /* ── Render list ── */
@@ -503,7 +544,199 @@ $('preview').querySelector('[data-clear-preview]').addEventListener('click', () 
 /* ── Search ── */
 $('search').addEventListener('input', e => { searchQ = e.target.value; render(); });
 
+/* ═══════════════════════════════════════
+   TAB SWITCHING
+   ═══════════════════════════════════════ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+  });
+});
 
+/* ═══════════════════════════════════════
+   ORDERS STATE
+   ═══════════════════════════════════════ */
+let allOrders = [];
+let orderFilter = 'pending';
+let unsubOrders = null;
+let firstSnapshot = true;
+
+/* ── Sound notif ── */
+function ping() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 880;
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    o.start(); o.stop(ctx.currentTime + 0.3);
+  } catch(e){}
+}
+
+/* ── Listener pesanan ── */
+function startOrders() {
+  if (unsubOrders) unsubOrders();
+  const { pesananCol, onSnapshot } = window.FB;
+
+  unsubOrders = onSnapshot(pesananCol, snap => {
+    const incoming = [];
+    snap.forEach(d => incoming.push({ id: d.id, ...d.data() }));
+    incoming.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+    if (!firstSnapshot) {
+      const newPending = incoming
+        .filter(o => o.status === 'pending')
+        .filter(o => !allOrders.some(old => old.id === o.id));
+      if (newPending.length) {
+        ping();
+        showToast(`🔔 ${newPending.length} pesanan baru!`);
+      }
+    }
+    firstSnapshot = false;
+    allOrders = incoming;
+    renderOrders();
+    updateOrderBadge();
+  }, err => {
+    console.error('Orders error:', err);
+    showToast('Gagal memuat pesanan: ' + err.message, true);
+  });
+}
+
+/* ── Badge merah di tab ── */
+function updateOrderBadge() {
+  const pendingCount = allOrders.filter(o => o.status === 'pending').length;
+  const badge = document.getElementById('pesanan-badge');
+  if (!badge) return;
+  if (pendingCount > 0) {
+    badge.textContent = pendingCount > 99 ? '99+' : pendingCount;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+/* ── Render list pesanan ── */
+function renderOrders() {
+  const list    = document.getElementById('orders-list');
+  const empty   = document.getElementById('orders-empty');
+  const countEl = document.getElementById('order-count');
+  if (!list) return;
+
+  const items = orderFilter === 'all'
+    ? allOrders
+    : allOrders.filter(o => o.status === orderFilter);
+
+  countEl.textContent = `(${allOrders.length})`;
+  empty.classList.toggle('hidden', items.length > 0);
+
+  const stColor = s => s === 'pending'      ? 'border-yellow-500/40 text-yellow-400'
+                     : s === 'dikonfirmasi' ? 'border-blue-500/40 text-blue-400'
+                     : s === 'selesai'      ? 'border-green-500/40 text-green-400'
+                     : 'border-red-500/40 text-red-400';
+
+  const esc2 = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmtRp2 = n => 'Rp ' + (parseInt(n)||0).toLocaleString('id-ID');
+  const fmtDate = ts => ts?.toDate?.().toLocaleString('id-ID') || '-';
+
+  const waLink = k => {
+    let n = String(k||'').replace(/\D/g,'');
+    if (n.startsWith('0')) n = '62' + n.slice(1);
+    return n;
+  };
+
+  if (items.length === 0) {
+    list.innerHTML = '';
+    return;
+  }
+
+  list.innerHTML = items.map(o => `
+    <div class="item-row bg-ink-800 p-4 flex flex-col md:flex-row gap-4 md:items-center">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-2 flex-wrap">
+          <span class="font-mono text-[9px] tracking-widest uppercase border px-2 py-[2px] ${stColor(o.status)}">${esc2(o.status)}</span>
+          <span class="font-mono text-[10px] text-slate">${fmtDate(o.createdAt)}</span>
+        </div>
+        <p class="font-display font-bold text-cream text-sm">${esc2(o.namaProduk||'-')} <span class="text-gold">×${o.qty||0}</span></p>
+        <p class="font-mono text-[11px] text-gold">${fmtRp2(o.total)}</p>
+        <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-1 text-[11px] font-body text-slate-light">
+          <p><span class="text-slate">Nama:</span> <b class="text-cream">${esc2(o.namaPembeli||'-')}</b></p>
+          <p><span class="text-slate">Kontak:</span> <a class="text-gold hover:underline" href="https://wa.me/${waLink(o.whatsapp)}" target="_blank">${esc2(o.whatsapp||'-')} ↗</a></p>
+          ${o.catatan ? `<p class="md:col-span-2"><span class="text-slate">Catatan:</span> <i>${esc2(o.catatan)}</i></p>` : ''}
+        </div>
+      </div>
+      <div class="flex md:flex-col gap-2 shrink-0">
+        ${o.status === 'pending'
+          ? `<button data-oact="konfirmasi" data-oid="${o.id}" class="font-mono text-[10px] uppercase tracking-widest border border-gold/50 text-gold px-3 py-1.5 hover:bg-gold hover:text-ink transition-all">Konfirmasi</button>` : ''}
+        ${o.status === 'dikonfirmasi'
+          ? `<button data-oact="selesai" data-oid="${o.id}" class="font-mono text-[10px] uppercase tracking-widest border border-green-500/50 text-green-400 px-3 py-1.5 hover:bg-green-500 hover:text-ink transition-all">Selesai</button>` : ''}
+        ${['pending','dikonfirmasi'].includes(o.status)
+          ? `<button data-oact="batal" data-oid="${o.id}" class="font-mono text-[10px] uppercase tracking-widest border border-red-500/30 text-red-400 px-3 py-1.5 hover:bg-red-500/10 transition-all">Batalkan</button>` : ''}
+        <button data-oact="hapus" data-oid="${o.id}" class="font-mono text-[10px] uppercase tracking-widest border border-white/10 text-slate px-3 py-1.5 hover:border-red-500 hover:text-red-400 transition-all">Hapus</button>
+      </div>
+    </div>`).join('');
+
+  list.querySelectorAll('[data-oact]').forEach(b => {
+    b.addEventListener('click', () => handleOrderAction(b.dataset.oact, b.dataset.oid));
+  });
+}
+
+/* ── Aksi konfirmasi / selesai / batal / hapus ── */
+async function handleOrderAction(action, id) {
+  const { db, doc, updateDoc, deleteDoc, runTransaction, serverTimestamp } = window.FB;
+  const orderRef = doc(db, 'orders', id);
+  const order = allOrders.find(o => o.id === id);
+  if (!order) return;
+
+  try {
+    if (action === 'konfirmasi') {
+      await updateDoc(orderRef, { status: 'dikonfirmasi', updatedAt: serverTimestamp() });
+      showToast('Pesanan dikonfirmasi');
+    }
+    else if (action === 'selesai') {
+      await updateDoc(orderRef, { status: 'selesai', updatedAt: serverTimestamp() });
+      showToast('Pesanan selesai');
+    }
+    else if (action === 'batal') {
+      if (!confirm('Batalkan pesanan? Stok akan dikembalikan.')) return;
+      const productRef = doc(db, 'products', order.productId);
+      await runTransaction(db, async tx => {
+        const pSnap = await tx.get(productRef);
+        if (pSnap.exists()) {
+          const stokBaru = (parseInt(pSnap.data().stok) || 0) + (parseInt(order.qty) || 0);
+          tx.update(productRef, {
+            stok: stokBaru,
+            status: stokBaru > 0 ? 'tersedia' : 'habis',
+            updatedAt: serverTimestamp(),
+          });
+        }
+        tx.update(orderRef, { status: 'dibatalkan', updatedAt: serverTimestamp() });
+      });
+      showToast('Pesanan dibatalkan, stok dikembalikan');
+    }
+    else if (action === 'hapus') {
+      if (!confirm('Hapus pesanan ini secara permanen?')) return;
+      await deleteDoc(orderRef);
+      showToast('Pesanan dihapus');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Gagal: ' + err.message, true);
+  }
+}
+
+/* ── Filter pesanan ── */
+document.querySelectorAll('.o-filter').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.o-filter').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    orderFilter = b.dataset.ostat;
+    renderOrders();
+  });
+});
 
 </script>
 </body>
